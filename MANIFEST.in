@@ -1,0 +1,3 @@
+include versioneer.py
+include neptune/new/integrations/optuna/impl/_version.py
+include neptune_optuna/_version.py
