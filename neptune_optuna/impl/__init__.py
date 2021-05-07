@@ -74,13 +74,27 @@ class NeptuneCallback:
         self._log_plot_optimization_history = log_plot_optimization_history
 
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial):
+        self._log_trial(trial)
+        self._log_trial_distributions(trial)
+        self._log_best_trials(study)
+        self._log_study_details(study, trial)
+        self._log_plots(study, trial)
+        self._log_study(study, trial)
+
+    def _log_trial(self, trial):
         self.run['trials'] = stringify_keys(log_all_trials([trial]))
+
+    def _log_trial_distributions(self, trial):
         self.run['study/distributions'].log(trial.distributions)
+
+    def _log_best_trials(self, study):
         self.run['best'] = stringify_keys(log_best_trials(study))
 
+    def _log_study_details(self, study, trial):
         if trial._trial_id == 0:
             log_study_details(self.run, study)
 
+    def _log_plots(self, study, trial):
         if self._should_log_plots(study, trial):
             log_plots(self.run, study,
                       backend=self._vis_backend,
@@ -94,6 +108,7 @@ class NeptuneCallback:
                       log_plot_intermediate_values=self._log_plot_intermediate_values,
                       )
 
+    def _log_study(self, study, trial):
         if self._should_log_study(study, trial):
             log_study(self.run, study)
 
