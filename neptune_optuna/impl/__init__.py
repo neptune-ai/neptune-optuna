@@ -30,12 +30,76 @@ except ImportError:
 
 
 class NeptuneCallback:
+    """A callback that logs the metadata from Optuna Study to Neptune.
+
+    With this callback, you can log and display:
+
+    * values and params for each trial
+    * current best values and params for the study
+    * visualizations from the `optuna.visualizations` module
+    * parameter distributions for each trial
+    * study object itself to load it later
+    * and more
+
+    For more information, see `Neptune-Optuna integration docs page`_.
+    .. _Neptune Optuna integration docs page:
+       https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+
+    Args:
+        run(neptune.Run): Neptune Run.
+        base_namespace(str, optional): Namespace inside the Run where your study metadata is logged. Defaults to ''.
+        plots_update_freq(int, str, optional): Frequency at which plots are logged and updated in Neptune.
+            If you pass integer value k, plots will be updated every k iterations.
+            If you pass the string 'never', plots will not be logged. Defaults to 1.
+        study_update_freq(int, str, optional): It is a frequency at which a study object is logged and updated in Neptune.
+            If you pass integer value k, the study will be updated every k iterations.
+            If you pass the string 'never', plots will not be logged. Defaults to 1.
+        visualization_backend(str, optional): Which visualization backend is used for 'optuna.visualizations' plots.
+            It can be one of 'matplotlib' or 'plotly'. Defaults to 'plotly'.
+        log_plot_contour(bool, optional): If 'True' the `optuna.visualizations.plot_contour`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_edf(bool, optional): If 'True' the `optuna.visualizations.plot_edf`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_parallel_coordinate(bool, optional): If 'True' the `optuna.visualizations.plot_parallel_coordinate`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_param_importances(bool, optional): If 'True' the `optuna.visualizations.plot_param_importances`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_pareto_front(bool, optional): If 'True' the `optuna.visualizations.plot_pareto_front`
+            visualization will be logged to Neptune.
+            If your `optuna.study` is not multi-objective this plot is not logged. Defaults to `True`.
+        log_plot_slice(bool, optional): If 'True' the `optuna.visualizations.plot_slice`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_intermediate_values(bool, optional): If 'True' the `optuna.visualizations.plot_intermediate_values`
+            visualization will be logged to Neptune.
+            If your `optuna.study` is not using pruners this plot is not logged. Defaults to `True`. Defaults to `True`.
+        log_plot_optimization_history(bool, optional): If 'True' the `optuna.visualizations.plot_optimization_history`
+            visualization will be logged to Neptune. Defaults to `True`.
+
+    Examples:
+
+        Create a Run:
+        >>> import neptune.new as neptune
+        ... run = neptune.init('my_workspace/my_project')
+
+        Initialize a NeptuneCallback:
+        >>> import neptune.new.integrations.optuna as optuna_utils
+        ... neptune_callback = optuna_utils.NeptuneCallback(run)
+
+        Pass NeptuneCallback to the Optuna Study:
+        >>> study = optuna.create_study(direction='maximize')
+        ... study.optimize(objective, n_trials=5, callbacks=[neptune_callback])
+
+    For more information, see `Neptune-Optuna integration docs page`_.
+    .. _Neptune Optuna integration docs page:
+       https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+    """
+
     def __init__(self,
                  run: neptune.Run,
                  base_namespace: str = '',
                  plots_update_freq: Union[int, str] = 1,
                  study_update_freq: Union[int, str] = 1,
-                 vis_backend: str = 'plotly',
+                 visualization_backend: str = 'plotly',
                  log_plot_contour: bool = True,
                  log_plot_edf: bool = True,
                  log_plot_parallel_coordinate: bool = True,
@@ -47,10 +111,10 @@ class NeptuneCallback:
 
         verify_type('run', run, neptune.Run)
         verify_type('base_namespace', base_namespace, str)
-        
+
         verify_type('log_plots_freq', plots_update_freq, (int, str, type(None)))
         verify_type('log_study_freq', study_update_freq, (int, str, type(None)))
-        verify_type('vis_backend', vis_backend, (str, type(None)))
+        verify_type('visualization_backend', visualization_backend, (str, type(None)))
         verify_type('log_plot_contour', log_plot_contour, (bool, type(None)))
         verify_type('log_plot_edf', log_plot_edf, (bool, type(None)))
         verify_type('log_plot_parallel_coordinate', log_plot_parallel_coordinate, (bool, type(None)))
@@ -61,7 +125,7 @@ class NeptuneCallback:
         verify_type('log_plot_optimization_history', log_plot_optimization_history, (bool, type(None)))
 
         self.run = run[base_namespace]
-        self._vis_backend = vis_backend
+        self._visualization_backend = visualization_backend
         self._plots_update_freq = plots_update_freq
         self._study_update_freq = study_update_freq
         self._log_plot_contour = log_plot_contour
@@ -82,22 +146,22 @@ class NeptuneCallback:
         self._log_study(study, trial)
 
     def _log_trial(self, trial):
-        self.run['trials'] = stringify_keys(log_all_trials([trial]))
+        self.run['trials'] = _stringify_keys(_log_all_trials([trial]))
 
     def _log_trial_distributions(self, trial):
         self.run['study/distributions'].log(trial.distributions)
 
     def _log_best_trials(self, study):
-        self.run['best'] = stringify_keys(log_best_trials(study))
+        self.run['best'] = _stringify_keys(_log_best_trials(study))
 
     def _log_study_details(self, study, trial):
         if trial._trial_id == 0:
-            log_study_details(self.run, study)
+            _log_study_details(self.run, study)
 
     def _log_plots(self, study, trial):
         if self._should_log_plots(study, trial):
-            log_plots(self.run, study,
-                      backend=self._vis_backend,
+            _log_plots(self.run, study,
+                      visualization_backend=self._visualization_backend,
                       log_plot_contour=self._log_plot_contour,
                       log_plot_edf=self._log_plot_edf,
                       log_plot_parallel_coordinate=self._log_plot_parallel_coordinate,
@@ -110,36 +174,218 @@ class NeptuneCallback:
 
     def _log_study(self, study, trial):
         if self._should_log_study(study, trial):
-            log_study(self.run, study)
+            _log_study(self.run, study)
 
-    def _should_log_plots(self, study: optuna.Study, trial: optuna.trial.FrozenTrial):
+    def _should_log_plots(self, study: optuna.Study, trial: optuna.trial.FrozenTrial): # TODO Why FrozenTrial?
         if self._plots_update_freq == 'never':
             return False
-        if self._plots_update_freq == 'last':
-            if study._stop_flag: # TODO there seems to be no good condition for determining the last trial
-                return True
         else:
             if trial._trial_id % self._plots_update_freq == 0:
                 return True
         return False
 
-    def _should_log_study(self, study: optuna.Study, trial: optuna.trial.FrozenTrial):
+    def _should_log_study(self, study: optuna.Study, trial: optuna.trial.FrozenTrial): # TODO Why FrozenTrial?
         if self._study_update_freq == 'never':
             return False
-        if self._study_update_freq == 'last':
-            if study._stop_flag: # TODO there seems to be no good condition for determining the last trial
-                return True
         else:
             if trial._trial_id % self._study_update_freq == 0:
                 return True
         return False
 
 
-def stringify_keys(o):
-    return {str(k): stringify_keys(v) for k, v in o.items()} if isinstance(o, dict) else o
+def log_study_metadata(study: optuna.Study,
+                       run: neptune.Run,
+                       base_namespace='',
+                       log_plots=True,
+                       log_study=True,
+                       log_study_details=True,
+                       log_best_trials=True,
+                       log_all_trials=True,
+                       log_distributions=True,
+                       visualization_backend='plotly',
+                       log_plot_contour=True,
+                       log_plot_edf=True,
+                       log_plot_parallel_coordinate=True,
+                       log_plot_param_importances=True,
+                       log_plot_pareto_front=True,
+                       log_plot_slice=True,
+                       log_plot_intermediate_values=True,
+                       log_plot_optimization_history=True):
+    """A function that logs the metadata from Optuna Study to Neptune.
+
+    With this function, you can log and display:
+
+    * values and params for each trial
+    * current best values and params for the study
+    * visualizations from the `optuna.visualizations` module
+    * parameter distributions for each trial
+    * study object itself to load it later
+    * and more
+
+    For more information, see `Neptune-Optuna integration docs page`_.
+    .. _Neptune Optuna integration docs page:
+       https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+
+    Args:
+        study(optuna.Study): Optuna study object.
+        run(neptune.Run): Neptune Run.
+        base_namespace(str, optional): Namespace inside the Run where your study metadata is logged. Defaults to ''.
+        log_plots(bool): If 'True' the visualiztions from `optuna.visualizations` will be logged to Neptune.
+            Defaults to 'True'.
+        log_study(bool): If 'True' the study from `optuna.visualizations` will be logged to Neptune.
+            Defaults to 'True'.
+                       log_study=True,
+                       log_study_details=True,
+                       log_best_trials=True,
+                       log_all_trials=True,
+                       log_distributions=True,
+
+        visualization_backend(str, optional): Which visualization backend is used for 'optuna.visualizations' plots.
+            It can be one of 'matplotlib' or 'plotly'. Defaults to 'plotly'.
+        log_plot_contour(bool, optional): If 'True' the `optuna.visualizations.plot_contour`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_edf(bool, optional): If 'True' the `optuna.visualizations.plot_edf`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_parallel_coordinate(bool, optional): If 'True' the `optuna.visualizations.plot_parallel_coordinate`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_param_importances(bool, optional): If 'True' the `optuna.visualizations.plot_param_importances`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_pareto_front(bool, optional): If 'True' the `optuna.visualizations.plot_pareto_front`
+            visualization will be logged to Neptune.
+            If your `optuna.study` is not multi-objective this plot is not logged. Defaults to `True`.
+        log_plot_slice(bool, optional): If 'True' the `optuna.visualizations.plot_slice`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_intermediate_values(bool, optional): If 'True' the `optuna.visualizations.plot_intermediate_values`
+            visualization will be logged to Neptune.
+            If your `optuna.study` is not using pruners this plot is not logged. Defaults to `True`. Defaults to `True`.
+        log_plot_optimization_history(bool, optional): If 'True' the `optuna.visualizations.plot_optimization_history`
+            visualization will be logged to Neptune. Defaults to `True`.
+
+    Examples:
+
+        Create a Run:
+        >>> import neptune.new as neptune
+        ... run = neptune.init('my_workspace/my_project')
+
+        Initialize a NeptuneCallback:
+        >>> import neptune.new.integrations.optuna as optuna_utils
+        ... neptune_callback = optuna_utils.NeptuneCallback(run)
+
+        Pass NeptuneCallback to the Optuna Study:
+        >>> study = optuna.create_study(direction='maximize')
+        ... study.optimize(objective, n_trials=5, callbacks=[neptune_callback])
+
+    For more information, see `Neptune-Optuna integration docs page`_.
+    .. _Neptune Optuna integration docs page:
+       https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+    """
+    run = run[base_namespace]
+
+    if log_all_trials:
+        run['trials'] = _stringify_keys(_log_all_trials(study.trials))
+
+    if log_distributions:
+        run['study/distributions'].log(list(trial.distributions for trial in study.trials))
+
+    if log_best_trials:
+        run['best'] = _stringify_keys(_log_best_trials(study))
+
+    if log_study_details:
+        _log_study_details(run, study)
+
+    if log_plots:
+        _log_plots(run, study,
+                  visualization_backend=visualization_backend,
+                  log_plot_contour=log_plot_contour,
+                  log_plot_edf=log_plot_edf,
+                  log_plot_parallel_coordinate=log_plot_parallel_coordinate,
+                  log_plot_param_importances=log_plot_param_importances,
+                  log_plot_pareto_front=log_plot_pareto_front,
+                  log_plot_slice=log_plot_slice,
+                  log_plot_optimization_history=log_plot_optimization_history,
+                  log_plot_intermediate_values=log_plot_intermediate_values,
+                  )
+
+    if log_study:
+        _log_study(run, study)
 
 
-def log_study_details(run, study: optuna.Study):
+def load_study_from_run(run: neptune.Run):
+    """A function that logs the metadata from Optuna Study to Neptune.
+
+    With this function, you can log and display:
+
+    * values and params for each trial
+    * current best values and params for the study
+    * visualizations from the `optuna.visualizations` module
+    * parameter distributions for each trial
+    * study object itself to load it later
+    * and more
+
+    For more information, see `Neptune-Optuna integration docs page`_.
+    .. _Neptune Optuna integration docs page:
+       https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+
+    Args:
+        study(optuna.Study): Optuna study object.
+        run(neptune.Run): Neptune Run.
+        base_namespace(str, optional): Namespace inside the Run where your study metadata is logged. Defaults to ''.
+        log_plots(bool): If 'True' the visualiztions from `optuna.visualizations` will be logged to Neptune.
+            Defaults to 'True'.
+        log_study(bool): If 'True' the study from `optuna.visualizations` will be logged to Neptune.
+            Defaults to 'True'.
+                       log_study=True,
+                       log_study_details=True,
+                       log_best_trials=True,
+                       log_all_trials=True,
+                       log_distributions=True,
+
+        visualization_backend(str, optional): Which visualization backend is used for 'optuna.visualizations' plots.
+            It can be one of 'matplotlib' or 'plotly'. Defaults to 'plotly'.
+        log_plot_contour(bool, optional): If 'True' the `optuna.visualizations.plot_contour`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_edf(bool, optional): If 'True' the `optuna.visualizations.plot_edf`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_parallel_coordinate(bool, optional): If 'True' the `optuna.visualizations.plot_parallel_coordinate`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_param_importances(bool, optional): If 'True' the `optuna.visualizations.plot_param_importances`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_pareto_front(bool, optional): If 'True' the `optuna.visualizations.plot_pareto_front`
+            visualization will be logged to Neptune.
+            If your `optuna.study` is not multi-objective this plot is not logged. Defaults to `True`.
+        log_plot_slice(bool, optional): If 'True' the `optuna.visualizations.plot_slice`
+            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_intermediate_values(bool, optional): If 'True' the `optuna.visualizations.plot_intermediate_values`
+            visualization will be logged to Neptune.
+            If your `optuna.study` is not using pruners this plot is not logged. Defaults to `True`. Defaults to `True`.
+        log_plot_optimization_history(bool, optional): If 'True' the `optuna.visualizations.plot_optimization_history`
+            visualization will be logged to Neptune. Defaults to `True`.
+
+    Examples:
+
+        Create a Run:
+        >>> import neptune.new as neptune
+        ... run = neptune.init('my_workspace/my_project')
+
+        Initialize a NeptuneCallback:
+        >>> import neptune.new.integrations.optuna as optuna_utils
+        ... neptune_callback = optuna_utils.NeptuneCallback(run)
+
+        Pass NeptuneCallback to the Optuna Study:
+        >>> study = optuna.create_study(direction='maximize')
+        ... study.optimize(objective, n_trials=5, callbacks=[neptune_callback])
+
+    For more information, see `Neptune-Optuna integration docs page`_.
+    .. _Neptune Optuna integration docs page:
+       https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+    """
+    if run['study/storage_type'].fetch() == 'InMemoryStorage':
+        return _get_pickle(path='study/study', run=run)
+    else:
+        return optuna.load_study(study_name=run['study/study_name'].fetch(), storage=run['study/storage_url'].fetch())
+
+
+def _log_study_details(run, study: optuna.Study):
     run['study/study_name'] = study.study_name
     run['study/direction'] = study.direction
     run['study/directions'] = study.directions
@@ -152,7 +398,7 @@ def log_study_details(run, study: optuna.Study):
         pass
 
 
-def log_study(run, study: optuna.Study):
+def _log_study(run, study: optuna.Study):
     try:
         if type(study._storage) is optuna.storages._in_memory.InMemoryStorage:
             """pickle and log the study object to the 'study/study.pkl' path"""
@@ -178,42 +424,9 @@ def log_study(run, study: optuna.Study):
         pass
 
 
-def export_pickle(obj):
-    from io import BytesIO
-    import pickle
-
-    buffer = BytesIO()
-    pickle.dump(obj, buffer)
-    buffer.seek(0)
-
-    return buffer
-
-
-def load_study_from_run(run: neptune.Run):
-    if run['study/storage_type'].fetch() == 'InMemoryStorage':
-        return get_pickle(path='study/study', run=run)
-    else:
-        return optuna.load_study(study_name=run['study/study_name'].fetch(), storage=run['study/storage_url'].fetch())
-
-
-def get_pickle(run: neptune.Run, path: str):
-    import os
-    import tempfile
-    import pickle
-
-    with tempfile.TemporaryDirectory() as d:
-        run[path].download(destination=d)
-        filepath = os.listdir(d)[0]
-        full_path = os.path.join(d, filepath)
-        with open(full_path, 'rb') as file:
-            artifact = pickle.load(file)
-
-    return artifact
-
-
-def log_plots(run,
+def _log_plots(run,
               study: optuna.Study,
-              backend='plotly',
+              visualization_backend='plotly',
               log_plot_contour=True,
               log_plot_edf=True,
               log_plot_parallel_coordinate=True,
@@ -223,12 +436,12 @@ def log_plots(run,
               log_plot_intermediate_values=True,
               log_plot_optimization_history=True,
               ):
-    if backend == 'matplotlib':
+    if visualization_backend == 'matplotlib':
         import optuna.visualization.matplotlib as vis
-    elif backend == 'plotly':
+    elif visualization_backend == 'plotly':
         import optuna.visualization as vis
     else:
-        raise NotImplementedError(f'{backend} visualisation backend is not implemented')
+        raise NotImplementedError(f'{visualization_backend} visualisation backend is not implemented')
 
     if vis.is_available:
         if log_plot_contour:
@@ -240,7 +453,7 @@ def log_plots(run,
                 neptune.types.File.as_html(vis.plot_parallel_coordinate(study))
         if log_plot_param_importances and len(study.trials) > 1:
             run['visualizations/plot_param_importances'] = neptune.types.File.as_html(vis.plot_param_importances(study))
-        if log_plot_pareto_front and study._is_multi_objective() and backend == 'plotly':
+        if log_plot_pareto_front and study._is_multi_objective() and visualization_backend == 'plotly':
             run['visualizations/plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study))
         if log_plot_slice:
             run['visualizations/plot_slice'] = neptune.types.File.as_html(vis.plot_slice(study))
@@ -253,7 +466,7 @@ def log_plots(run,
                 neptune.types.File.as_html(vis.plot_optimization_history(study))
 
 
-def log_best_trials(study: optuna.Study):
+def _log_best_trials(study: optuna.Study):
     best_results = {'value': study.best_value,
                     'params': study.best_params,
                     'value|params': f'value: {study.best_value}| params: {study.best_params}'}
@@ -271,7 +484,7 @@ def log_best_trials(study: optuna.Study):
     return best_results
 
 
-def log_all_trials(trials: Iterable[optuna.trial.FrozenTrial]):
+def _log_all_trials(trials: Iterable[optuna.trial.FrozenTrial]):
     trials_results = {'values': [], 'params': [], 'values|params': []}
     for trial in trials:
         trials_results['values'].append(trial.value)
@@ -289,51 +502,20 @@ def log_all_trials(trials: Iterable[optuna.trial.FrozenTrial]):
     return trials_results
 
 
-def log_study_metadata(study: optuna.Study,
-                       run: neptune.Run,
-                       base_namespace='',
-                       should_log_plots=True,
-                       should_log_study=True,
-                       should_log_study_details=True,
-                       should_log_best_trials=True,
-                       should_log_all_trials=True,
-                       should_log_distributions=True,
-                       vis_backend='plotly',
-                       log_plot_contour=True,
-                       log_plot_edf=True,
-                       log_plot_parallel_coordinate=True,
-                       log_plot_param_importances=True,
-                       log_plot_pareto_front=True,
-                       log_plot_slice=True,
-                       log_plot_intermediate_values=True,
-                       log_plot_optimization_history=True):
+def _stringify_keys(o):
+    return {str(k): _stringify_keys(v) for k, v in o.items()} if isinstance(o, dict) else o
 
-    run = run[base_namespace]
 
-    if should_log_all_trials:
-        run['trials'] = stringify_keys(log_all_trials(study.trials))
+def _get_pickle(run: neptune.Run, path: str):
+    import os
+    import tempfile
+    import pickle
 
-    if should_log_distributions:
-        run['study/distributions'].log(list(trial.distributions for trial in study.trials))
+    with tempfile.TemporaryDirectory() as d:
+        run[path].download(destination=d)
+        filepath = os.listdir(d)[0]
+        full_path = os.path.join(d, filepath)
+        with open(full_path, 'rb') as file:
+            artifact = pickle.load(file)
 
-    if should_log_best_trials:
-        run['best'] = stringify_keys(log_best_trials(study))
-
-    if should_log_study_details:
-        log_study_details(run, study)
-
-    if should_log_plots:
-        log_plots(run, study,
-                  backend=vis_backend,
-                  log_plot_contour=log_plot_contour,
-                  log_plot_edf=log_plot_edf,
-                  log_plot_parallel_coordinate=log_plot_parallel_coordinate,
-                  log_plot_param_importances=log_plot_param_importances,
-                  log_plot_pareto_front=log_plot_pareto_front,
-                  log_plot_slice=log_plot_slice,
-                  log_plot_optimization_history=log_plot_optimization_history,
-                  log_plot_intermediate_values=log_plot_intermediate_values,
-                  )
-
-    if should_log_study:
-        log_study(run, study)
+    return artifact
