@@ -141,7 +141,7 @@ class NeptuneCallback:
         self._log_study(study, trial)
 
     def _log_trial(self, trial):
-        self.run['trials'] = _stringify_keys(_log_all_trials([trial]))
+        _log_trials(self.run, [trial])
 
     def _log_trial_distributions(self, trial):
         self.run['study/distributions'].log(trial.distributions)
@@ -154,7 +154,7 @@ class NeptuneCallback:
             _log_study_details(self.run, study)
 
     def _log_plots(self, study, trial):
-        if self._should_log_plots(study, trial):
+        if self._should_log_plots(trial):
             _log_plots(self.run, study,
                       visualization_backend=self._visualization_backend,
                       log_plot_contour=self._log_plot_contour,
@@ -168,10 +168,10 @@ class NeptuneCallback:
                       )
 
     def _log_study(self, study, trial):
-        if self._should_log_study(study, trial):
+        if self._should_log_study(trial):
             _log_study(self.run, study)
 
-    def _should_log_plots(self, study: optuna.Study, trial: optuna.trial.FrozenTrial): # TODO Why FrozenTrial?
+    def _should_log_plots(self, trial: optuna.trial.FrozenTrial):
         if self._plots_update_freq == 'never':
             return False
         else:
@@ -179,7 +179,7 @@ class NeptuneCallback:
                 return True
         return False
 
-    def _should_log_study(self, study: optuna.Study, trial: optuna.trial.FrozenTrial): # TODO Why FrozenTrial?
+    def _should_log_study(self, trial: optuna.trial.FrozenTrial):
         if self._study_update_freq == 'never':
             return False
         else:
@@ -270,7 +270,7 @@ def log_study_metadata(study: optuna.Study,
     run['best'] = _stringify_keys(_log_best_trials(study))
 
     if log_all_trials:
-        run['trials'] = _stringify_keys(_log_all_trials(study.trials))
+        _log_trials(run, study.trials)
 
     if log_distributions:
         run['study/distributions'].log(list(trial.distributions for trial in study.trials))
@@ -424,22 +424,21 @@ def _log_best_trials(study: optuna.Study):
     return best_results
 
 
-def _log_all_trials(trials: Iterable[optuna.trial.FrozenTrial]):
-    trials_results = {'values': [], 'params': [], 'values|params': []}
+def _log_trials(run, trials: Iterable[optuna.trial.FrozenTrial]):
+    handle = run['trials']
     for trial in trials:
-        trials_results['values'].append(trial.value)
-        trials_results['params'].append(trial.params)
-        trials_results['values|params'].append(f'value: {trial.value}| params: {trial.params}')
+        handle['values'].log(trial.value)
+        handle['params'].log(trial.params)
+        handle['values|params'].log(f'value: {trial.value}| params: {trial.params}')
 
-        trials_results[f'trials/{trial._trial_id}/datetime_start'] = trial.datetime_start
-        trials_results[f'trials/{trial._trial_id}/datetime_complete'] = trial.datetime_complete
-        trials_results[f'trials/{trial._trial_id}/duration'] = trial.duration
-        trials_results[f'trials/{trial._trial_id}/distributions'] = trial.distributions
-        trials_results[f'trials/{trial._trial_id}/intermediate_values'] = trial.intermediate_values
-        trials_results[f'trials/{trial._trial_id}/params'] = trial.params
-        trials_results[f'trials/{trial._trial_id}/value'] = trial.value
-        trials_results[f'trials/{trial._trial_id}/values'] = trial.values
-    return trials_results
+        handle[f'trials/{trial._trial_id}/datetime_start'] = trial.datetime_start
+        handle[f'trials/{trial._trial_id}/datetime_complete'] = trial.datetime_complete
+        handle[f'trials/{trial._trial_id}/duration'] = trial.duration
+        handle[f'trials/{trial._trial_id}/distributions'] = _stringify_keys(trial.distributions)
+        handle[f'trials/{trial._trial_id}/intermediate_values'] = _stringify_keys(trial.intermediate_values)
+        handle[f'trials/{trial._trial_id}/params'] = _stringify_keys(trial.params)
+        handle[f'trials/{trial._trial_id}/value'] = trial.value
+        handle[f'trials/{trial._trial_id}/values'] = trial.values
 
 
 def _stringify_keys(o):
