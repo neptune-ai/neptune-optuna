@@ -29,6 +29,9 @@ except ImportError:
     from neptune.internal.utils import verify_type
 
 
+__all__ = ['NeptuneCallback', 'log_study_metadata', 'load_study_from_run']
+
+
 class NeptuneCallback:
     """A callback that logs the metadata from Optuna Study to Neptune.
 
