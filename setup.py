@@ -16,7 +16,7 @@ def main():
         all_deps += extras[group_name]
     extras['all'] = all_deps
 
-    base_libs = ['neptune-client>=0.5.4', 'xgboost>=1.3.0', 'matplotlib']
+    base_libs = ['neptune-client>=0.5.4', 'optuna>=2.4.0', 'plotly']
 
     version = None
     if os.path.exists('PKG-INFO'):
