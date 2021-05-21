@@ -13,9 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from typing import Union, Iterable
+__all__ = [
+    'NeptuneCallback',
+    'log_study_metadata',
+    'load_study_from_run',
+]
+
+from typing import Iterable, Union
 
 import optuna
+
+from neptune_optuna import __version__
 
 try:
     # neptune-client=0.9.0 package structure
@@ -28,8 +36,7 @@ except ImportError:
     from neptune.types import File
     from neptune.internal.utils import verify_type
 
-
-__all__ = ['NeptuneCallback', 'log_study_metadata', 'load_study_from_run']
+INTEGRATION_VERSION_KEY = 'source_code/integrations/neptune-optuna'
 
 
 class NeptuneCallback:
@@ -135,6 +142,8 @@ class NeptuneCallback:
         self._log_plot_intermediate_values = log_plot_intermediate_values
         self._log_plot_optimization_history = log_plot_optimization_history
 
+        run[INTEGRATION_VERSION_KEY] = __version__
+
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial):
         self._log_trial(trial)
         self._log_trial_distributions(trial)
@@ -159,16 +168,16 @@ class NeptuneCallback:
     def _log_plots(self, study, trial):
         if self._should_log_plots(trial):
             _log_plots(self.run, study,
-                      visualization_backend=self._visualization_backend,
-                      log_plot_contour=self._log_plot_contour,
-                      log_plot_edf=self._log_plot_edf,
-                      log_plot_parallel_coordinate=self._log_plot_parallel_coordinate,
-                      log_plot_param_importances=self._log_plot_param_importances,
-                      log_plot_pareto_front=self._log_plot_pareto_front,
-                      log_plot_slice=self._log_plot_slice,
-                      log_plot_optimization_history=self._log_plot_optimization_history,
-                      log_plot_intermediate_values=self._log_plot_intermediate_values,
-                      )
+                       visualization_backend=self._visualization_backend,
+                       log_plot_contour=self._log_plot_contour,
+                       log_plot_edf=self._log_plot_edf,
+                       log_plot_parallel_coordinate=self._log_plot_parallel_coordinate,
+                       log_plot_param_importances=self._log_plot_param_importances,
+                       log_plot_pareto_front=self._log_plot_pareto_front,
+                       log_plot_slice=self._log_plot_slice,
+                       log_plot_optimization_history=self._log_plot_optimization_history,
+                       log_plot_intermediate_values=self._log_plot_intermediate_values,
+                       )
 
     def _log_study(self, study, trial):
         if self._should_log_study(trial):
@@ -280,16 +289,16 @@ def log_study_metadata(study: optuna.Study,
 
     if log_plots:
         _log_plots(run, study,
-                  visualization_backend=visualization_backend,
-                  log_plot_contour=log_plot_contour,
-                  log_plot_edf=log_plot_edf,
-                  log_plot_parallel_coordinate=log_plot_parallel_coordinate,
-                  log_plot_param_importances=log_plot_param_importances,
-                  log_plot_pareto_front=log_plot_pareto_front,
-                  log_plot_slice=log_plot_slice,
-                  log_plot_optimization_history=log_plot_optimization_history,
-                  log_plot_intermediate_values=log_plot_intermediate_values,
-                  )
+                   visualization_backend=visualization_backend,
+                   log_plot_contour=log_plot_contour,
+                   log_plot_edf=log_plot_edf,
+                   log_plot_parallel_coordinate=log_plot_parallel_coordinate,
+                   log_plot_param_importances=log_plot_param_importances,
+                   log_plot_pareto_front=log_plot_pareto_front,
+                   log_plot_slice=log_plot_slice,
+                   log_plot_optimization_history=log_plot_optimization_history,
+                   log_plot_intermediate_values=log_plot_intermediate_values,
+                   )
 
     if log_study:
         _log_study(run, study)
@@ -368,17 +377,17 @@ def _log_study(run, study: optuna.Study):
 
 
 def _log_plots(run,
-              study: optuna.Study,
-              visualization_backend='plotly',
-              log_plot_contour=True,
-              log_plot_edf=True,
-              log_plot_parallel_coordinate=True,
-              log_plot_param_importances=True,
-              log_plot_pareto_front=True,
-              log_plot_slice=True,
-              log_plot_intermediate_values=True,
-              log_plot_optimization_history=True,
-              ):
+               study: optuna.Study,
+               visualization_backend='plotly',
+               log_plot_contour=True,
+               log_plot_edf=True,
+               log_plot_parallel_coordinate=True,
+               log_plot_param_importances=True,
+               log_plot_pareto_front=True,
+               log_plot_slice=True,
+               log_plot_intermediate_values=True,
+               log_plot_optimization_history=True,
+               ):
     if visualization_backend == 'matplotlib':
         import optuna.visualization.matplotlib as vis
     elif visualization_backend == 'plotly':
