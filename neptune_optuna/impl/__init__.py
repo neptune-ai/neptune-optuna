@@ -439,10 +439,14 @@ def _log_best_trials(study: optuna.Study):
 def _log_trials(run, trials: Iterable[optuna.trial.FrozenTrial]):
     handle = run['trials']
     for trial in trials:
-        handle['values'].log(trial.value)
+        if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
+            handle[f'trials/{trial._trial_id}/state'] = repr(trial.state)
+
+        if trial.value:
+            handle['values'].log(trial.value, step=trial._trial_id)
+
         handle['params'].log(trial.params)
         handle['values|params'].log(f'value: {trial.value}| params: {trial.params}')
-
         handle[f'trials/{trial._trial_id}/datetime_start'] = trial.datetime_start
         handle[f'trials/{trial._trial_id}/datetime_complete'] = trial.datetime_complete
         handle[f'trials/{trial._trial_id}/duration'] = trial.duration
