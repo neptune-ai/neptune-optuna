@@ -26,15 +26,17 @@ import optuna
 from neptune_optuna import __version__
 
 try:
-    # neptune-client=0.9.0 package structure
+    # neptune-client=0.9.0+ package structure
     import neptune.new as neptune
     from neptune.new.types import File
     from neptune.new.internal.utils import verify_type
+    from neptune.new.internal.utils.compatibility import expect_not_an_experiment
 except ImportError:
-    # neptune-client=1.0.0 package structure
+    # neptune-client>=1.0.0 package structure
     import neptune
     from neptune.types import File
     from neptune.internal.utils import verify_type
+    from neptune.internal.utils.compatibility import expect_not_an_experiment
 
 INTEGRATION_VERSION_KEY = 'source_code/integrations/neptune-optuna'
 
@@ -114,6 +116,7 @@ class NeptuneCallback:
                  log_plot_intermediate_values: bool = True,
                  log_plot_optimization_history: bool = True):
 
+        expect_not_an_experiment(run)
         verify_type('run', run, neptune.Run)
         verify_type('base_namespace', base_namespace, str)
 
