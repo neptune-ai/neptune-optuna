@@ -1,7 +1,7 @@
 ## neptune-optuna 0.9.15
 
 ### Fixes
-- Disabled ploting parameters importance on failure ([#7](https://github.com/neptune-ai/neptune-optuna/pull/7))
+- Disabled ploting parameters importance on failure ([#10](https://github.com/neptune-ai/neptune-optuna/pull/10))
 
 ## neptune-optuna 0.9.14
 
