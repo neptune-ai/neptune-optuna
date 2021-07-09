@@ -419,6 +419,7 @@ def _log_plots(run,
             except (RuntimeError, ValueError, ZeroDivisionError):
                 # Unable to compute importances
                 pass
+
         if log_plot_pareto_front and study._is_multi_objective() and visualization_backend == 'plotly':
             run['visualizations/plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study))
 
