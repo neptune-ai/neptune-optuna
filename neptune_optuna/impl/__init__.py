@@ -169,7 +169,7 @@ class NeptuneCallback:
             _log_study_details(self.run, study)
 
     def _log_plots(self, study, trial):
-        if self._should_log_plots(trial):
+        if self._should_log_plots(study, trial):
             _log_plots(self.run, study,
                        visualization_backend=self._visualization_backend,
                        log_plot_contour=self._log_plot_contour,
@@ -186,8 +186,10 @@ class NeptuneCallback:
         if self._should_log_study(trial):
             _log_study(self.run, study)
 
-    def _should_log_plots(self, trial: optuna.trial.FrozenTrial):
-        if self._plots_update_freq == 'never':
+    def _should_log_plots(self, study: optuna.study.Study, trial: optuna.trial.FrozenTrial):
+        if not len(study.get_trials(states=(optuna.trial.TrialState.COMPLETE,))):
+            return False
+        elif self._plots_update_freq == 'never':
             return False
         else:
             if trial._trial_id % self._plots_update_freq == 0:
@@ -399,33 +401,45 @@ def _log_plots(run,
         raise NotImplementedError(f'{visualization_backend} visualisation backend is not implemented')
 
     if vis.is_available:
-        if log_plot_contour:
+        params = list(p_name for t in study.trials for p_name in t.params.keys())
+
+        if log_plot_contour and any(params):
             run['visualizations/plot_contour'] = neptune.types.File.as_html(vis.plot_contour(study))
+
         if log_plot_edf:
             run['visualizations/plot_edf'] = neptune.types.File.as_html(vis.plot_edf(study))
+
         if log_plot_parallel_coordinate:
             run['visualizations/plot_parallel_coordinate'] = \
                 neptune.types.File.as_html(vis.plot_parallel_coordinate(study))
-        if log_plot_param_importances and len(study.trials) > 1:
+
+        if log_plot_param_importances and len(study.get_trials(states=(optuna.trial.TrialState.COMPLETE, optuna.trial.TrialState.PRUNED,))) > 1:
             try:
                 run['visualizations/plot_param_importances'] = neptune.types.File.as_html(vis.plot_param_importances(study))
             except (RuntimeError, ValueError, ZeroDivisionError):
                 # Unable to compute importances
                 pass
+
         if log_plot_pareto_front and study._is_multi_objective() and visualization_backend == 'plotly':
             run['visualizations/plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study))
-        if log_plot_slice:
+
+        if log_plot_slice and any(params):
             run['visualizations/plot_slice'] = neptune.types.File.as_html(vis.plot_slice(study))
+
         if log_plot_intermediate_values and any(trial.intermediate_values for trial in study.trials):
             # Intermediate values plot if available only if the above condition is met
             run['visualizations/plot_intermediate_values'] = \
                 neptune.types.File.as_html(vis.plot_intermediate_values(study))
+
         if log_plot_optimization_history:
             run['visualizations/plot_optimization_history'] = \
                 neptune.types.File.as_html(vis.plot_optimization_history(study))
 
 
 def _log_best_trials(study: optuna.Study):
+    if not study.best_trials:
+        return dict()
+
     best_results = {'value': study.best_value,
                     'params': study.best_params,
                     'value|params': f'value: {study.best_value}| params: {study.best_params}'}
