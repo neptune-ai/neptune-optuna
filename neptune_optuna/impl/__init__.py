@@ -407,7 +407,11 @@ def _log_plots(run,
             run['visualizations/plot_parallel_coordinate'] = \
                 neptune.types.File.as_html(vis.plot_parallel_coordinate(study))
         if log_plot_param_importances and len(study.trials) > 1:
-            run['visualizations/plot_param_importances'] = neptune.types.File.as_html(vis.plot_param_importances(study))
+            try:
+                run['visualizations/plot_param_importances'] = neptune.types.File.as_html(vis.plot_param_importances(study))
+            except (RuntimeError, ValueError, ZeroDivisionError):
+                # Unable to compute importances
+                pass
         if log_plot_pareto_front and study._is_multi_objective() and visualization_backend == 'plotly':
             run['visualizations/plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study))
         if log_plot_slice:
