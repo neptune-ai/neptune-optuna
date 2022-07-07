@@ -193,12 +193,12 @@ class NeptuneCallback:
         if trial._trial_id == 0:
             _log_study_details(self.run, study)
 
-    def _log_plots(self, study, trial, namespaces, targets, target_name):
+    def _log_plots(self, study, trial, namespaces, targets, target_names):
         if self._should_log_plots(study, trial):
             _log_plots(self.run, study,
                        namespaces=namespaces,
                        target=targets,
-                       target_name=target_name,
+                       target_names=target_names,
                        visualization_backend=self._visualization_backend,
                        log_plot_contour=self._log_plot_contour,
                        log_plot_edf=self._log_plot_edf,
