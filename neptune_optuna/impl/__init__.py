@@ -19,7 +19,8 @@ __all__ = [
     'load_study_from_run',
 ]
 
-from typing import Iterable, Union
+
+from typing import Iterable, Callable, Union, Tuple, List
 
 import optuna
 
@@ -39,6 +40,29 @@ except ImportError:
     from neptune.internal.utils.compatibility import expect_not_an_experiment
 
 INTEGRATION_VERSION_KEY = 'source_code/integrations/neptune-optuna'
+
+
+def get_targets_and_namespaces(
+    study: optuna.Study,
+    target_name: list[str] = None
+    )-> Tuple[Union[List[Callable[[list], int]], None], Union[List[str], str]]:
+
+    if study._is_multi_objective():
+        targets = list(map(lambda direction_index: (lambda : study.values[direction_index]), range(len(study.directions))))
+
+        if target_name is None:
+            namespaces = list(map(lambda direction_index: f'visualizations/objective_{direction_index}', range(len(study.directions))))
+            return targets, namespaces
+        else:
+            assert len(target_name) == len(study.directions), "target_name list must be of the same length as study.directions"
+            namespaces = list(map(lambda objective_name: f'visualizations/{objective_name}', target_name))
+            return targets, namespaces
+    else:
+        target = None
+        namespace = 'visualizations'
+        return target, namespace
+
+
 
 
 class NeptuneCallback:
@@ -383,6 +407,8 @@ def _log_study(run, study: optuna.Study):
 
 def _log_plots(run,
                study: optuna.Study,
+               target=None,
+               target_name: str='Objective_1',
                visualization_backend='plotly',
                log_plot_contour=True,
                log_plot_edf=True,
