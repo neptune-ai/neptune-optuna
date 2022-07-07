@@ -44,18 +44,18 @@ INTEGRATION_VERSION_KEY = 'source_code/integrations/neptune-optuna'
 
 def get_targets_and_namespaces(
     study: optuna.Study,
-    target_name: list[str] = None
+    target_names: list[str] = None
     )-> Tuple[Union[List[Callable[[list], int]], None], Union[List[str], str]]:
 
     if study._is_multi_objective():
         targets = list(map(lambda direction_index: (lambda : study.values[direction_index]), range(len(study.directions))))
 
-        if target_name is None:
+        if target_names is None:
             namespaces = list(map(lambda direction_index: f'visualizations/objective_{direction_index}', range(len(study.directions))))
             return targets, namespaces
         else:
-            assert len(target_name) == len(study.directions), "target_name list must be of the same length as study.directions"
-            namespaces = list(map(lambda objective_name: f'visualizations/{objective_name}', target_name))
+            assert len(target_names) == len(study.directions), "target_name list must be of the same length as study.directions"
+            namespaces = list(map(lambda objective_name: f'visualizations/{objective_name}', target_names))
             return targets, namespaces
     else:
         target = None
@@ -171,13 +171,13 @@ class NeptuneCallback:
 
         run[INTEGRATION_VERSION_KEY] = __version__
 
-    def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial, target_name: Union[List[str], str] = None):
-        namespaces, targets = get_targets_and_namespaces(study, target_name)
+    def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial, target_names: Union[List[str], str] = None):
+        namespaces, targets = get_targets_and_namespaces(study, target_names)
         self._log_trial(trial)
         self._log_trial_distributions(trial)
         self._log_best_trials(study)
         self._log_study_details(study, trial)
-        self._log_plots(study, trial, namespaces, targets, target_name)
+        self._log_plots(study, trial, namespaces, targets, target_names)
         self._log_study(study, trial)
 
     def _log_trial(self, trial):
@@ -236,7 +236,7 @@ class NeptuneCallback:
 def log_study_metadata(study: optuna.Study,
                        run: neptune.Run,
                        base_namespace='',
-                       target_name: Union[List[str], str] = None,
+                       target_names: Union[List[str], str] = None,
                        log_plots=True,
                        log_study=True,
                        log_all_trials=True,
@@ -312,7 +312,7 @@ def log_study_metadata(study: optuna.Study,
     """
     run = run[base_namespace]
 
-    namespaces, targets = get_targets_and_namespaces(study, target_name)
+    namespaces, targets = get_targets_and_namespaces(study, target_names)
 
     _log_study_details(run, study)
     run['best'] = _stringify_keys(_log_best_trials(study))
@@ -327,7 +327,7 @@ def log_study_metadata(study: optuna.Study,
         _log_plots(run, study,
                    namespaces=namespaces,
                    targets=targets,
-                   target_name=target_name,
+                   target_names=target_names,
                    visualization_backend=visualization_backend,
                    log_plot_contour=log_plot_contour,
                    log_plot_edf=log_plot_edf,
