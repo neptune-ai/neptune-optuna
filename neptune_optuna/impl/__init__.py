@@ -177,7 +177,7 @@ class NeptuneCallback:
         self._log_trial_distributions(trial)
         self._log_best_trials(study)
         self._log_study_details(study, trial)
-        self._log_plots(study, trial)
+        self._log_plots(study, trial, namespaces, targets, target_name)
         self._log_study(study, trial)
 
     def _log_trial(self, trial):
@@ -193,9 +193,12 @@ class NeptuneCallback:
         if trial._trial_id == 0:
             _log_study_details(self.run, study)
 
-    def _log_plots(self, study, trial):
+    def _log_plots(self, study, trial, namespaces, targets, target_name):
         if self._should_log_plots(study, trial):
             _log_plots(self.run, study,
+                       namespaces=namespaces,
+                       target=targets,
+                       target_name=target_name,
                        visualization_backend=self._visualization_backend,
                        log_plot_contour=self._log_plot_contour,
                        log_plot_edf=self._log_plot_edf,
@@ -310,7 +313,7 @@ def log_study_metadata(study: optuna.Study,
     run = run[base_namespace]
 
     namespaces, targets = get_targets_and_namespaces(study, target_name)
-    
+
     _log_study_details(run, study)
     run['best'] = _stringify_keys(_log_best_trials(study))
 
@@ -322,6 +325,9 @@ def log_study_metadata(study: optuna.Study,
 
     if log_plots:
         _log_plots(run, study,
+                   namespaces=namespaces,
+                   targets=targets,
+                   target_name=target_name,
                    visualization_backend=visualization_backend,
                    log_plot_contour=log_plot_contour,
                    log_plot_edf=log_plot_edf,
@@ -411,8 +417,9 @@ def _log_study(run, study: optuna.Study):
 
 def _log_plots(run,
                study: optuna.Study,
-               target=None,
-               target_name: str='Objective_1',
+               namespaces,
+               target_name,
+               target,
                visualization_backend='plotly',
                log_plot_contour=True,
                log_plot_edf=True,
