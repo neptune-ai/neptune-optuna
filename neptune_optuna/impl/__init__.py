@@ -418,8 +418,8 @@ def _log_study(run, study: optuna.Study):
 def _log_plots(run,
                study: optuna.Study,
                namespaces,
-               target_name,
-               target,
+               targets,
+               target_names,
                visualization_backend='plotly',
                log_plot_contour=True,
                log_plot_edf=True,
@@ -437,40 +437,47 @@ def _log_plots(run,
     else:
         raise NotImplementedError(f'{visualization_backend} visualisation backend is not implemented')
 
-    if vis.is_available:
-        params = list(p_name for t in study.trials for p_name in t.params.keys())
+    for i in range(len(study.directions)):
+        namespace = namespaces[i] if isinstance(namespaces, list) else namespaces
+        target = targets[i] if targets is not None else None
+        target_name = target_names[i] if target_names is not None else f'Objective Value {i}'
 
-        if log_plot_contour and any(params):
-            run['visualizations/plot_contour'] = neptune.types.File.as_html(vis.plot_contour(study))
 
-        if log_plot_edf:
-            run['visualizations/plot_edf'] = neptune.types.File.as_html(vis.plot_edf(study))
+        if vis.is_available:
+            params = list(p_name for t in study.trials for p_name in t.params.keys())
 
-        if log_plot_parallel_coordinate:
-            run['visualizations/plot_parallel_coordinate'] = \
-                neptune.types.File.as_html(vis.plot_parallel_coordinate(study))
+            if log_plot_contour and any(params):
+                run[f'{namespace}/plot_contour'] = neptune.types.File.as_html(vis.plot_contour(study, target=target, target_name=target_name))
 
-        if log_plot_param_importances and len(study.get_trials(states=(optuna.trial.TrialState.COMPLETE, optuna.trial.TrialState.PRUNED,))) > 1:
-            try:
-                run['visualizations/plot_param_importances'] = neptune.types.File.as_html(vis.plot_param_importances(study))
-            except (RuntimeError, ValueError, ZeroDivisionError):
-                # Unable to compute importances
-                pass
+            if log_plot_edf:
+                run[f'{namespace}/plot_edf'] = neptune.types.File.as_html(vis.plot_edf(study, target=target, target_name=target_name))
 
-        if log_plot_pareto_front and study._is_multi_objective() and visualization_backend == 'plotly':
-            run['visualizations/plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study))
+            if log_plot_parallel_coordinate:
+                run[f'{namespace}/plot_parallel_coordinate'] = \
+                    neptune.types.File.as_html(vis.plot_parallel_coordinate(study, target=target, target_name=target_name))
 
-        if log_plot_slice and any(params):
-            run['visualizations/plot_slice'] = neptune.types.File.as_html(vis.plot_slice(study))
+            if log_plot_param_importances and len(study.get_trials(states=(optuna.trial.TrialState.COMPLETE, optuna.trial.TrialState.PRUNED,))) > 1:
+                try:
+                    run['{namespace}/plot_param_importances'] = neptune.types.File.as_html(vis.plot_param_importances(study, target=target, target_name=target_name))
+                except (RuntimeError, ValueError, ZeroDivisionError):
+                    # Unable to compute importances
+                    pass
 
-        if log_plot_intermediate_values and any(trial.intermediate_values for trial in study.trials):
-            # Intermediate values plot if available only if the above condition is met
-            run['visualizations/plot_intermediate_values'] = \
-                neptune.types.File.as_html(vis.plot_intermediate_values(study))
+            if log_plot_slice and any(params):
+                run[f'{namespace}/plot_slice'] = neptune.types.File.as_html(vis.plot_slice(study, target=target, target_name=target_name))
 
-        if log_plot_optimization_history:
-            run['visualizations/plot_optimization_history'] = \
-                neptune.types.File.as_html(vis.plot_optimization_history(study))
+            if log_plot_intermediate_values and any(trial.intermediate_values for trial in study.trials):
+                # Intermediate values plot if available only if the above condition is met
+                run[f'{namespace}/plot_intermediate_values'] = \
+                    neptune.types.File.as_html(vis.plot_intermediate_values(study, target=target, target_name=target_name))
+
+            if log_plot_optimization_history:
+                run[f'{namespace}/plot_optimization_history'] = \
+                    neptune.types.File.as_html(vis.plot_optimization_history(study, target=target, target_name=target_name))
+
+
+    if vis.is_available and log_plot_pareto_front and study._is_multi_objective() and visualization_backend == 'plotly':
+        run['visualizations/plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=target_names))
 
 
 def _log_best_trials(study: optuna.Study):
