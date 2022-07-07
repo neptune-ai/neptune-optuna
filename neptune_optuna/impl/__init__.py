@@ -484,9 +484,12 @@ def _log_best_trials(study: optuna.Study):
     if not study.best_trials:
         return dict()
 
-    best_results = {'value': study.best_value,
-                    'params': study.best_params,
-                    'value|params': f'value: {study.best_value}| params: {study.best_params}'}
+    best_results = dict()
+
+    if study._is_multi_objective() is False:
+        best_results['params'] = study.best_params
+        best_results['value'] = study.best_value
+        best_results['value|params'] = {f'value: {study.best_value}| params: {study.best_params}'}
 
     for trial in study.best_trials:
         best_results[f'trials/{trial._trial_id}/datetime_start'] = trial.datetime_start
@@ -495,8 +498,10 @@ def _log_best_trials(study: optuna.Study):
         best_results[f'trials/{trial._trial_id}/distributions'] = trial.distributions
         best_results[f'trials/{trial._trial_id}/intermediate_values'] = trial.intermediate_values
         best_results[f'trials/{trial._trial_id}/params'] = trial.params
-        best_results[f'trials/{trial._trial_id}/value'] = trial.value
-        best_results[f'trials/{trial._trial_id}/values'] = trial.values
+        if study._is_multi_objective():
+            best_results[f'trials/{trial._trial_id}/values'] = dict((f'objective_{k}',v) for k, v in enumerate(trial.values))
+        else:
+            best_results[f'trials/{trial._trial_id}/value'] = trial.value
 
     return best_results
 
