@@ -233,6 +233,7 @@ class NeptuneCallback:
 def log_study_metadata(study: optuna.Study,
                        run: neptune.Run,
                        base_namespace='',
+                       target_name: Union[List[str], str] = None,
                        log_plots=True,
                        log_study=True,
                        log_all_trials=True,
@@ -308,6 +309,8 @@ def log_study_metadata(study: optuna.Study,
     """
     run = run[base_namespace]
 
+    namespaces, targets = get_targets_and_namespaces(study, target_name)
+    
     _log_study_details(run, study)
     run['best'] = _stringify_keys(_log_best_trials(study))
 
