@@ -42,7 +42,7 @@ except ImportError:
 INTEGRATION_VERSION_KEY = 'source_code/integrations/neptune-optuna'
 
 
-def get_targets_and_namespaces(
+def get_plots_targets_and_namespaces(
     study: optuna.Study,
     target_names: list[str] = None
     )-> Tuple[Union[List[Callable[[list], int]], None], Union[List[str], str]]:
@@ -172,7 +172,7 @@ class NeptuneCallback:
         run[INTEGRATION_VERSION_KEY] = __version__
 
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial, target_names: Union[List[str], str] = None):
-        namespaces, targets = get_targets_and_namespaces(study, target_names)
+        namespaces, targets = get_plots_targets_and_namespaces(study, target_names)
         self._log_trial(trial)
         self._log_trial_distributions(trial)
         self._log_best_trials(study)
@@ -312,7 +312,7 @@ def log_study_metadata(study: optuna.Study,
     """
     run = run[base_namespace]
 
-    namespaces, targets = get_targets_and_namespaces(study, target_names)
+    namespaces, targets = get_plots_targets_and_namespaces(study, target_names)
 
     _log_study_details(run, study)
     run['best'] = _stringify_keys(_log_best_trials(study))
