@@ -175,7 +175,7 @@ class NeptuneCallback:
         namespaces, targets = get_plots_targets_and_namespaces(study, target_names)
         self._log_trial(trial)
         self._log_trial_distributions(trial)
-        self._log_best_trials(study)
+        self._log_best_trials(study, target_names)
         self._log_study_details(study, trial)
         self._log_plots(study, trial, namespaces, targets, target_names)
         self._log_study(study, trial)
@@ -186,8 +186,8 @@ class NeptuneCallback:
     def _log_trial_distributions(self, trial):
         self.run['study/distributions'].log(trial.distributions)
 
-    def _log_best_trials(self, study):
-        self.run['best'] = _stringify_keys(_log_best_trials(study))
+    def _log_best_trials(self, study, target_names):
+        self.run['best'] = _stringify_keys(_log_best_trials(study, target_names))
 
     def _log_study_details(self, study, trial):
         if trial._trial_id == 0:
@@ -315,7 +315,7 @@ def log_study_metadata(study: optuna.Study,
     namespaces, targets = get_plots_targets_and_namespaces(study, target_names)
 
     _log_study_details(run, study)
-    run['best'] = _stringify_keys(_log_best_trials(study))
+    run['best'] = _stringify_keys(_log_best_trials(study, target_names))
 
     if log_all_trials:
         _log_trials(run, study.trials)
@@ -480,7 +480,7 @@ def _log_plots(run,
         run['visualizations/plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=target_names))
 
 
-def _log_best_trials(study: optuna.Study):
+def _log_best_trials(study: optuna.Study, target_names):
     if not study.best_trials:
         return dict()
 
@@ -499,7 +499,10 @@ def _log_best_trials(study: optuna.Study):
         best_results[f'trials/{trial._trial_id}/intermediate_values'] = trial.intermediate_values
         best_results[f'trials/{trial._trial_id}/params'] = trial.params
         if study._is_multi_objective():
-            best_results[f'trials/{trial._trial_id}/values'] = dict((f'objective_{k}',v) for k, v in enumerate(trial.values))
+            if target_names is not None:
+                best_results[f'trials/{trial._trial_id}/values'] = dict((target_names[k],v) for k, v in enumerate(trial.values))
+            else:
+                best_results[f'trials/{trial._trial_id}/values'] = dict((f'objective_{k}',v) for k, v in enumerate(trial.values))
         else:
             best_results[f'trials/{trial._trial_id}/value'] = trial.value
 
