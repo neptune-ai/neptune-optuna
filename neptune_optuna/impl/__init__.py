@@ -183,7 +183,7 @@ class NeptuneCallback:
 
     # is this for a single trial?
     def _log_trial(self, study, trial):
-        _log_single_trial(self.run, study, trial=[trial], namespaces=self.namespaces)
+        _log_single_trial(self.run, study, trial=trial, namespaces=self.namespaces)
 
     def _log_trial_distributions(self, trial):
         self.run['study/distributions'].log(trial.distributions)
