@@ -485,7 +485,6 @@ def _log_plots(run,
                 temp_handle['plot_optimization_history'] = \
                     neptune.types.File.as_html(vis.plot_optimization_history(study, target=target, target_name=target_name))
 
-
     if vis.is_available and log_plot_pareto_front and study._is_multi_objective() and visualization_backend == 'plotly':
         handle['plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=namespaces))
 
