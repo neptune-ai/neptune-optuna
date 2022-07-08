@@ -173,7 +173,7 @@ class NeptuneCallback:
 
 
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial, target_names: Union[List[str], str] = None):
-        self.namespaces, self.targets = get_targets_and_namespaces(study, target_names)
+        self.targets, self.namespaces = get_targets_and_namespaces(study, target_names)
 
         self._log_trial(study, trial)
         self._log_trial_distributions(trial)
