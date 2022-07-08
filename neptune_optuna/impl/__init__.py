@@ -44,7 +44,7 @@ INTEGRATION_VERSION_KEY = 'source_code/integrations/neptune-optuna'
 
 def get_targets_and_namespaces(
     study: optuna.Study,
-    target_names: list[str] = None
+    target_names: List[str] = None
     )-> Tuple[Optional[List[Callable[[list], int]]], Optional[List[str]]]:
 
     if study._is_multi_objective():
