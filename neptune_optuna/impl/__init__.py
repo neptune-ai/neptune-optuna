@@ -183,7 +183,7 @@ class NeptuneCallback:
 
     # is this for a single trial?
     def _log_trial(self, study, trial):
-        _log_single_trial(self.run, study, trial=list(trial), namespaces=self.namespaces)
+        _log_single_trial(self.run, study, trial=[trial], namespaces=self.namespaces)
 
     def _log_trial_distributions(self, trial):
         self.run['study/distributions'].log(trial.distributions)
@@ -333,7 +333,7 @@ def log_study_metadata(study: optuna.Study,
         _log_trials(run, study, study.trials, namespaces=namespaces)
 
     if log_distributions:
-        run['study/distributions'].log(list(trial.distributions for trial in study.trials))
+        run['study/distributions'].log([trial.distributions for trial in study.trials])
 
     if log_plots:
         _log_plots(run, study,
