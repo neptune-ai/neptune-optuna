@@ -173,37 +173,36 @@ class NeptuneCallback:
 
 
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial, target_names: Union[List[str], str] = None):
-        namespaces, targets = get_targets_and_namespaces(study, target_names)
-        self._log_trial(study, trial, namespaces)
+        self.namespaces, self.targets = get_targets_and_namespaces(study, target_names)
+        self._log_trial(study, trial)
         self._log_trial_distributions(trial)
-        self._log_best_trials(study, namespaces)
+        self._log_best_trials(study)
         self._log_study_details(study, trial)
-        self._log_plots(study, trial, namespaces, targets, target_names)
+        self._log_plots(study, trial)
         self._log_study(study, trial)
 
     # is this for a single trial?
-    def _log_trial(self, study, trial, namespaces):
-        _log_single_trial(self.run, study, list(trial), namespaces, best=False)
+    def _log_trial(self, study, trial):
+        _log_single_trial(self.run, study, list(trial), self.namespaces)
 
     def _log_trial_distributions(self, trial):
         self.run['study/distributions'].log(trial.distributions)
 
-    def _log_best_trials(self, study, namespaces):
+    def _log_best_trials(self, study):
         if study._is_multi_objective():
-            _log_trials(self.run, study, study.best_trials, namespaces)
+            _log_trials(self.run, study, study.best_trials, self.namespaces, best=True)
         else:
-            _log_single_trial(self.run, study.best_trial, namespaces)
+            _log_single_trial(self.run, study.best_trial, self.namespaces, best=True)
 
     def _log_study_details(self, study, trial):
         if trial._trial_id == 0:
             _log_study_details(self.run, study)
 
-    def _log_plots(self, study, trial, namespaces, targets, target_names):
+    def _log_plots(self, study, trial):
         if self._should_log_plots(study, trial):
             _log_plots(self.run, study,
-                       namespaces=namespaces,
-                       target=targets,
-                       target_names=target_names,
+                       namespaces=self.namespaces,
+                       target=self.targets,
                        visualization_backend=self._visualization_backend,
                        log_plot_contour=self._log_plot_contour,
                        log_plot_edf=self._log_plot_edf,
@@ -321,12 +320,12 @@ def log_study_metadata(study: optuna.Study,
 
     _log_study_details(run, study)
     if study._is_multi_objective():
-        _log_trials(run, study, study.best_trials, namespaces, best=True)
+        _log_trials(run, study, study.best_trials, namespaces=namespaces, best=True)
     else:
-        _log_single_trial(run, study.best_trial, namespaces, best=True)
+        _log_single_trial(run, study.best_trial, namespaces=namespaces, best=True)
 
     if log_all_trials:
-        _log_trials(run, study.trials)
+        _log_trials(run, study, study.trials, namespaces=namespaces)
 
     if log_distributions:
         run['study/distributions'].log(list(trial.distributions for trial in study.trials))
@@ -335,7 +334,6 @@ def log_study_metadata(study: optuna.Study,
         _log_plots(run, study,
                    namespaces=namespaces,
                    targets=targets,
-                   target_names=target_names,
                    visualization_backend=visualization_backend,
                    log_plot_contour=log_plot_contour,
                    log_plot_edf=log_plot_edf,
@@ -490,7 +488,7 @@ def _log_plots(run,
         run[f'{base_plots_namespace}/plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=namespaces))
 
 
-def _get_trial_attrs(run, study, trial, namespaces, best=True):
+def _get_trial_attrs(run, study, trial, namespaces, best=False):
     handle = run['best'] if best else run['trials']
 
     handle[f'trials/{trial._trial_id}/datetime_start'] = trial.datetime_start
@@ -509,12 +507,12 @@ def _get_trial_attrs(run, study, trial, namespaces, best=True):
         handle[f'trials/{trial._trial_id}/value|params'] = {f'value: {trial.value}| params: {trial.params}'}
 
 
-def _log_single_trial(run, study, trial: optuna.trial.FrozenTrial, namespaces, best=True):
+def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False):
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
         _get_trial_attrs(run, study, trial, namespaces, best=best)
 
 
-def _log_trials(run, study: optuna.Study, trials: Iterable[optuna.trial.FrozenTrial], namespaces, best=True):
+def _log_trials(run, study: optuna.Study, trials: Iterable[optuna.trial.FrozenTrial], namespaces, best=False):
     if not study.best_trials and best:
         return dict()
     for trial in trials:
