@@ -44,11 +44,12 @@ INTEGRATION_VERSION_KEY = 'source_code/integrations/neptune-optuna'
 
 def get_targets_and_namespaces(
     study: optuna.Study,
+    trials: Iterable[optuna.trial.FrozenTrial],
     target_names: List[str] = None
     )-> Tuple[Optional[List[Callable[[list], int]]], Optional[List[str]]]:
 
     if study._is_multi_objective():
-        targets = list(map(lambda direction_index: (lambda : study.values[direction_index]), range(len(study.directions))))
+        targets = list(map(lambda direction_index: (lambda : trials[direction_index].values), range(len(trials))))
 
         if target_names is None:
             namespaces = list(map(lambda direction_index: f'objective_{direction_index}', range(len(study.directions))))
@@ -173,7 +174,7 @@ class NeptuneCallback:
 
 
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial, target_names: Union[List[str], str] = None):
-        self.targets, self.namespaces = get_targets_and_namespaces(study, target_names)
+        self.targets, self.namespaces = get_targets_and_namespaces(study, [trial], target_names)
 
         self._log_trial(study, trial)
         self._log_trial_distributions(trial)
@@ -322,7 +323,7 @@ def log_study_metadata(study: optuna.Study,
     """
     run = run[base_namespace]
 
-    namespaces, targets = get_targets_and_namespaces(study, target_names)
+    namespaces, targets = get_targets_and_namespaces(study, study.trials, target_names)
 
     _log_study_details(run, study)
     if study._is_multi_objective():
