@@ -173,10 +173,8 @@ class NeptuneCallback:
 
 
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial, target_names: Union[List[str], str] = None):
-        namespaces, targets = get_targets_and_namespaces(study, target_names)
-        
-        self.namespaces = namespaces
-        self.targets = targets
+        self.namespaces, self.targets = get_targets_and_namespaces(study, target_names)
+
         self._log_trial(study, trial)
         self._log_trial_distributions(trial)
         self._log_best_trials(study)
@@ -205,7 +203,7 @@ class NeptuneCallback:
         if self._should_log_plots(study, trial):
             _log_plots(self.run, study,
                        namespaces=self.namespaces,
-                       target=self.targets,
+                       targets=self.targets,
                        visualization_backend=self._visualization_backend,
                        log_plot_contour=self._log_plot_contour,
                        log_plot_edf=self._log_plot_edf,
