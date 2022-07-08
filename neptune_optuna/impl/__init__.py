@@ -183,16 +183,16 @@ class NeptuneCallback:
 
     # is this for a single trial?
     def _log_trial(self, study, trial):
-        _log_single_trial(self.run, study, list(trial), self.namespaces)
+        _log_single_trial(self.run, study, trial=list(trial), namespaces=self.namespaces)
 
     def _log_trial_distributions(self, trial):
         self.run['study/distributions'].log(trial.distributions)
 
     def _log_best_trials(self, study):
         if study._is_multi_objective():
-            _log_trials(self.run, study, study.best_trials, self.namespaces, best=True)
+            _log_trials(self.run, study, trials=study.best_trials, namespaces=self.namespaces, best=True)
         else:
-            _log_single_trial(self.run, study.best_trial, self.namespaces, best=True)
+            _log_single_trial(self.run, trial=study.best_trial, namespaces=self.namespaces, best=True)
 
     def _log_study_details(self, study, trial):
         if trial._trial_id == 0:
@@ -320,9 +320,9 @@ def log_study_metadata(study: optuna.Study,
 
     _log_study_details(run, study)
     if study._is_multi_objective():
-        _log_trials(run, study, study.best_trials, namespaces=namespaces, best=True)
+        _log_trials(run, study, trials=study.best_trials, namespaces=namespaces, best=True)
     else:
-        _log_single_trial(run, study.best_trial, namespaces=namespaces, best=True)
+        _log_single_trial(run, study, trial=study.best_trial, namespaces=namespaces, best=True)
 
     if log_all_trials:
         _log_trials(run, study, study.trials, namespaces=namespaces)
@@ -384,9 +384,11 @@ def load_study_from_run(run: neptune.Run):
 
 def _log_study_details(run, study: optuna.Study):
     run['study/study_name'] = study.study_name
-    # TODO: check if study multi-objective
-    run['study/direction'] = study.direction
-    run['study/directions'] = study.directions
+
+    if study._is_multi_objective():
+        run['study/directions'] = study.directions
+    else:
+        run['study/direction'] = study.direction
 
     run['study/system_attrs'] = study.system_attrs
     run['study/user_attrs'] = study.user_attrs
@@ -444,48 +446,48 @@ def _log_plots(run,
     else:
         raise NotImplementedError(f'{visualization_backend} visualisation backend is not implemented')
 
-    base_plots_namespace = 'visualizations'
+    handle = run['visualizations']
 
     for i in range(len(study.directions)):
-        namespace = f'{base_plots_namespace}/{namespaces[i]}' if isinstance(namespaces, list) else base_plots_namespace
         target = targets[i] if targets is not None else None
         target_name = namespaces[i] if isinstance(namespaces, list) else f'Objective Value {i}'
+        temp_handle = handle[namespaces[i]] if isinstance(namespaces, list) else handle
 
         if vis.is_available:
             params = list(p_name for t in study.trials for p_name in t.params.keys())
 
             if log_plot_contour and any(params):
-                run[f'{namespace}/plot_contour'] = neptune.types.File.as_html(vis.plot_contour(study, target=target, target_name=target_name))
+                temp_handle['plot_contour'] = neptune.types.File.as_html(vis.plot_contour(study, target=target, target_name=target_name))
 
             if log_plot_edf:
-                run[f'{namespace}/plot_edf'] = neptune.types.File.as_html(vis.plot_edf(study, target=target, target_name=target_name))
+                temp_handle['plot_edf'] = neptune.types.File.as_html(vis.plot_edf(study, target=target, target_name=target_name))
 
             if log_plot_parallel_coordinate:
-                run[f'{namespace}/plot_parallel_coordinate'] = \
+                temp_handle['plot_parallel_coordinate'] = \
                     neptune.types.File.as_html(vis.plot_parallel_coordinate(study, target=target, target_name=target_name))
 
             if log_plot_param_importances and len(study.get_trials(states=(optuna.trial.TrialState.COMPLETE, optuna.trial.TrialState.PRUNED,))) > 1:
                 try:
-                    run['{namespace}/plot_param_importances'] = neptune.types.File.as_html(vis.plot_param_importances(study, target=target, target_name=target_name))
+                    temp_handle['plot_param_importances'] = neptune.types.File.as_html(vis.plot_param_importances(study, target=target, target_name=target_name))
                 except (RuntimeError, ValueError, ZeroDivisionError):
                     # Unable to compute importances
                     pass
 
             if log_plot_slice and any(params):
-                run[f'{namespace}/plot_slice'] = neptune.types.File.as_html(vis.plot_slice(study, target=target, target_name=target_name))
+                temp_handle['plot_slice'] = neptune.types.File.as_html(vis.plot_slice(study, target=target, target_name=target_name))
 
             if log_plot_intermediate_values and any(trial.intermediate_values for trial in study.trials):
                 # Intermediate values plot if available only if the above condition is met
-                run[f'{namespace}/plot_intermediate_values'] = \
+                temp_handle['plot_intermediate_values'] = \
                     neptune.types.File.as_html(vis.plot_intermediate_values(study, target=target, target_name=target_name))
 
             if log_plot_optimization_history:
-                run[f'{namespace}/plot_optimization_history'] = \
+                temp_handle['plot_optimization_history'] = \
                     neptune.types.File.as_html(vis.plot_optimization_history(study, target=target, target_name=target_name))
 
 
     if vis.is_available and log_plot_pareto_front and study._is_multi_objective() and visualization_backend == 'plotly':
-        run[f'{base_plots_namespace}/plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=namespaces))
+        handle['plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=namespaces))
 
 
 def _get_trial_attrs(run, study, trial, namespaces, best=False):
@@ -497,19 +499,27 @@ def _get_trial_attrs(run, study, trial, namespaces, best=False):
     handle[f'trials/{trial._trial_id}/distributions'] = trial.distributions
     handle[f'trials/{trial._trial_id}/intermediate_values'] = trial.intermediate_values
     handle[f'trials/{trial._trial_id}/params'] = trial.params
-    handle[f'trials/{trial._trial_id}/state'] = repr(trial.state)
 
     if study._is_multi_objective():
         handle[f'trials/{trial._trial_id}/values'] = dict((f'{namespaces[k]}',v) for k, v in enumerate(trial.values))
     else:
-
         handle[f'trials/{trial._trial_id}/value'] = trial.value
-        handle[f'trials/{trial._trial_id}/value|params'] = {f'value: {trial.value}| params: {trial.params}'}
+
+        if best:
+            handle['value'] = trial.value
+            handle['param'] = trial.params
+            handle['value|param'] = f'value: {trial.value}| params: {trial.params}'
+        else:
+            handle['values'].log(trial.value, step=trial._trial_id)
+            handle['params'].log(trial.params)
+            handle['values|params'].log(f'value: {trial.value}| params: {trial.params}')
+
+    if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
+        handle[f'trials/{trial._trial_id}/state'] = repr(trial.state)
 
 
 def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False):
-    if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
-        _get_trial_attrs(run, study, trial, namespaces, best=best)
+    _get_trial_attrs(run, study, trial, namespaces, best=best)
 
 
 def _log_trials(run, study: optuna.Study, trials: Iterable[optuna.trial.FrozenTrial], namespaces, best=False):
@@ -517,10 +527,6 @@ def _log_trials(run, study: optuna.Study, trials: Iterable[optuna.trial.FrozenTr
         return dict()
     for trial in trials:
         _log_single_trial(run, study, trial, namespaces, best=best)
-
-
-def _stringify_keys(o):
-    return {str(k): _stringify_keys(v) for k, v in o.items()} if isinstance(o, dict) else o
 
 
 def _get_pickle(run: neptune.Run, path: str):
