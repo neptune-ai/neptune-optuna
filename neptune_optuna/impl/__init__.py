@@ -269,6 +269,7 @@ def log_study_metadata(study: optuna.Study,
         study(optuna.Study): Optuna study object.
         run(neptune.Run): Neptune Run.
         base_namespace(str, optional): Namespace inside the Run where your study metadata is logged. Defaults to ''.
+        target_names(List[str], optional): List of objective names if `optuna.study` is multi-objective. Defaults to None.
         log_plots(bool): If 'True' the visualiztions from `optuna.visualizations` will be logged to Neptune.
             Defaults to 'True'.
         log_study(bool): If 'True' the study will be logged to Neptune. Depending on the study storage type used
@@ -306,9 +307,13 @@ def log_study_metadata(study: optuna.Study,
         >>> study = optuna.create_study(direction='maximize')
         ... study.optimize(objective, n_trials=5)
 
-        Log Study metadata to Neptune:
+        Log single and multi-objective Study metadata to Neptune:
         >>> import neptune.new.integrations.optuna as optuna_utils
         ... optuna_utils.log_study_metadata(study, run)
+
+        Or `optionally` pass a list of objective names:
+        ... optuna_utils.log_study_metadata(study, run, target_names=['FLOPS', 'accuracy'])
+
 
     For more information, see `Neptune-Optuna integration docs page`_.
     .. _Neptune Optuna integration docs page:
