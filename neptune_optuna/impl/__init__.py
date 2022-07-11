@@ -506,7 +506,7 @@ def _log_plots(run,
         handle['plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=namespaces))
 
 
-def _log_trial_attributes(run, study, trial, namespaces, best=False):
+def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False):
     handle = run['best'] if best else run['trials']
 
     handle[f'trials/{trial._trial_id}/datetime_start'] = trial.datetime_start
@@ -532,10 +532,6 @@ def _log_trial_attributes(run, study, trial, namespaces, best=False):
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
         handle[f'trials/{trial._trial_id}/state'] = repr(trial.state)
-
-
-def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False):
-    _log_trial_attributes(run, study, trial, namespaces, best=best)
 
 
 def _log_trials(run, study: optuna.Study, trials: Iterable[optuna.trial.FrozenTrial], namespaces, best=False):
