@@ -228,8 +228,12 @@ def get_namespaces(
             assert len(target_names) == len(study.directions), "target_name list must be of the same length as study.directions"
             return target_names
     else:
-        namespace = ''
-        return namespace
+        if target_names is None:
+            namespace = 'Objective Value'
+            return namespace
+        else:
+            assert len(target_names) == 1, "target_name list must be of the same length as study.directions"
+            return target_names[0]
 
 
 def log_study_metadata(study: optuna.Study,
@@ -453,7 +457,7 @@ def _log_plots(run,
             temp_handle = handle[namespaces[i]]
         else:
             target = None
-            target_name = f'Objective Value {i}'
+            target_name = namespaces
             temp_handle = handle
 
 
