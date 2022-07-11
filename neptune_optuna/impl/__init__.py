@@ -41,30 +41,6 @@ except ImportError:
 
 INTEGRATION_VERSION_KEY = 'source_code/integrations/neptune-optuna'
 
-
-def get_targets_and_namespaces(
-    study: optuna.Study,
-    trials: Iterable[optuna.trial.FrozenTrial],
-    target_names: List[str] = None
-    )-> Tuple[Optional[List[Callable[[list], int]]], Optional[List[str]]]:
-
-    if study._is_multi_objective():
-        targets = list(map(lambda direction_index: (lambda : trials[direction_index].values), range(len(trials))))
-
-        if target_names is None:
-            namespaces = list(map(lambda direction_index: f'objective_{direction_index}', range(len(study.directions))))
-            return targets, namespaces
-        else:
-            assert len(target_names) == len(study.directions), "target_name list must be of the same length as study.directions"
-            return targets, target_names
-    else:
-        target = None
-        namespace = ''
-        return target, namespace
-
-
-
-
 class NeptuneCallback:
     """A callback that logs the metadata from Optuna Study to Neptune.
 
@@ -128,6 +104,7 @@ class NeptuneCallback:
     def __init__(self,
                  run: neptune.Run,
                  base_namespace: str = '',
+                 target_names: Union[List[str], str] = None,
                  plots_update_freq: Union[int, str] = 1,
                  study_update_freq: Union[int, str] = 1,
                  visualization_backend: str = 'plotly',
@@ -157,6 +134,7 @@ class NeptuneCallback:
         verify_type('log_plot_optimization_history', log_plot_optimization_history, (bool, type(None)))
 
         self.run = run[base_namespace]
+        self.target_names = target_names
         self._visualization_backend = visualization_backend
         self._plots_update_freq = plots_update_freq
         self._study_update_freq = study_update_freq
@@ -173,8 +151,8 @@ class NeptuneCallback:
 
 
 
-    def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial, target_names: Union[List[str], str] = None):
-        self.targets, self.namespaces = get_targets_and_namespaces(study, [trial], target_names)
+    def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial):
+        self.namespaces = get_namespaces(study, self.target_names)
 
         self._log_trial(study, trial)
         self._log_trial_distributions(trial)
@@ -238,6 +216,22 @@ class NeptuneCallback:
                 return True
         return False
 
+
+def get_namespaces(
+    study: optuna.Study,
+    target_names: List[str] = None
+    )-> Tuple[Optional[List[Callable[[list], int]]], Optional[List[str]]]:
+
+    if study._is_multi_objective():
+        if target_names is None:
+            namespaces = list(map(lambda direction_index: f'objective_{direction_index}', range(len(study.directions))))
+            return namespaces
+        else:
+            assert len(target_names) == len(study.directions), "target_name list must be of the same length as study.directions"
+            return target_names
+    else:
+        namespace = ''
+        return namespace
 
 def log_study_metadata(study: optuna.Study,
                        run: neptune.Run,
@@ -323,7 +317,7 @@ def log_study_metadata(study: optuna.Study,
     """
     run = run[base_namespace]
 
-    namespaces, targets = get_targets_and_namespaces(study, study.trials, target_names)
+    namespaces = get_namespaces(study, target_names)
 
     _log_study_details(run, study)
     if study._is_multi_objective():
@@ -340,7 +334,6 @@ def log_study_metadata(study: optuna.Study,
     if log_plots:
         _log_plots(run, study,
                    namespaces=namespaces,
-                   targets=targets,
                    visualization_backend=visualization_backend,
                    log_plot_contour=log_plot_contour,
                    log_plot_edf=log_plot_edf,
@@ -435,7 +428,6 @@ def _log_study(run, study: optuna.Study):
 def _log_plots(run,
                study: optuna.Study,
                namespaces,
-               targets,
                visualization_backend='plotly',
                log_plot_contour=True,
                log_plot_edf=True,
@@ -456,9 +448,15 @@ def _log_plots(run,
     handle = run['visualizations']
 
     for i in range(len(study.directions)):
-        target = targets[i] if targets is not None else None
-        target_name = namespaces[i] if isinstance(namespaces, list) else f'Objective Value {i}'
-        temp_handle = handle[namespaces[i]] if isinstance(namespaces, list) else handle
+        if isinstance(namespaces, list):
+            target = lambda t: t.values[i]
+            target_name = namespaces[i]
+            temp_handle = handle[namespaces[i]]
+        else:
+            target = None
+            target_name = f'Objective Value {i}'
+            temp_handle = handle
+
 
         if vis.is_available:
             params = list(p_name for t in study.trials for p_name in t.params.keys())
