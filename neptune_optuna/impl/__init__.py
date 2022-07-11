@@ -182,7 +182,6 @@ class NeptuneCallback:
         if self._should_log_plots(study, trial):
             _log_plots(self.run, study,
                        namespaces=self.namespaces,
-                       targets=self.targets,
                        visualization_backend=self._visualization_backend,
                        log_plot_contour=self._log_plot_contour,
                        log_plot_edf=self._log_plot_edf,
