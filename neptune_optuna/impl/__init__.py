@@ -166,7 +166,7 @@ class NeptuneCallback:
         self._log_study_details(study, trial)
         self._log_plots(study, trial)
         self._log_study(study, trial)
-        _log_best_trials(self.run, study, self.namespaces)
+        log_best_trials(self.run, study, self.namespaces)
 
     # is this for a single trial?
     def _log_trial(self, study, trial):
@@ -217,7 +217,7 @@ class NeptuneCallback:
                 return True
         return False
 
-def _log_best_trials(run, study: optuna.Study, namespaces):
+def log_best_trials(run, study: optuna.Study, namespaces):
     if study._is_multi_objective():
         _log_trials(run, study, trials=study.best_trials, namespaces=namespaces, best=True)
     else:
@@ -334,8 +334,9 @@ def log_study_metadata(study: optuna.Study,
 
     namespaces = get_namespaces(study, target_names)
 
+    log_best_trials(run, study, namespaces)
     _log_study_details(run, study)
-    _log_best_trials(run, study, namespaces)
+
 
     if log_all_trials:
         _log_trials(run, study, study.trials, namespaces=namespaces)
