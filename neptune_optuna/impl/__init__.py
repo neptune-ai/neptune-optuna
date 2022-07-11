@@ -56,6 +56,7 @@ class NeptuneCallback:
     Args:
         run(neptune.Run): Neptune Run.
         base_namespace(str, optional): Namespace inside the Run where your study metadata is logged. Defaults to ''.
+        target_names(Union[List[str], str], optional): Names of the study objectives to log (i.e., "Accuracy"). Defaults to None.
         plots_update_freq(int, str, optional): Frequency at which plots are logged and updated in Neptune.
             If you pass integer value k, plots will be updated every k iterations.
             If you pass the string 'never', plots will not be logged. Defaults to 1.
@@ -92,9 +93,16 @@ class NeptuneCallback:
         >>> import neptune.new.integrations.optuna as optuna_utils
         ... neptune_callback = optuna_utils.NeptuneCallback(run)
 
-        Pass NeptuneCallback to the Optuna Study:
+        Or `optionally` pass a list of objective names:
+            Single objective:
+            ... neptune_callback = optuna_utils.NeptuneCallback(run, target_names=['accuracy'])
+            Multi-objective:
+            ... neptune_callback = optuna_utils.NeptuneCallback(run, target_names=['FLOPS', 'accuracy'])
+
+        Log single and multi-objective Study metadata to Neptune by passing NeptuneCallback to the Optuna Study:
         >>> study = optuna.create_study(direction='maximize')
         ... study.optimize(objective, n_trials=5, callbacks=[neptune_callback])
+
 
     For more information, see `Neptune-Optuna integration docs page`_.
     .. _Neptune Optuna integration docs page:
@@ -311,7 +319,10 @@ def log_study_metadata(study: optuna.Study,
         ... optuna_utils.log_study_metadata(study, run)
 
         Or `optionally` pass a list of objective names:
-        ... optuna_utils.log_study_metadata(study, run, target_names=['FLOPS', 'accuracy'])
+            Single-objective:
+            ... optuna_utils.log_study_metadata(study, run, target_names=['accuracy'])
+            Multi-objective:
+            ... optuna_utils.log_study_metadata(study, run, target_names=['FLOPS', 'accuracy'])
 
 
     For more information, see `Neptune-Optuna integration docs page`_.
