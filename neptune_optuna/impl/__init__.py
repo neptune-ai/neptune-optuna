@@ -216,8 +216,8 @@ class NeptuneCallback:
             return True
         return False
 
-    def _log_best_trials(self, study: optuna.Study):
-        _log_best_trials(self.run, study, namespaces=self.namespaces)
+    def log_best_trials(self, study: optuna.Study):
+        _log_best_trials(self.run, study, namespaces=self._namespaces)
 
 def _log_best_trials(run, study: optuna.Study, namespaces: List[str] = None):
     if study._is_multi_objective():
