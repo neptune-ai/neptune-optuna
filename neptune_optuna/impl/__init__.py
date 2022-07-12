@@ -57,7 +57,7 @@ class NeptuneCallback:
     Args:
         run(neptune.Run): Neptune Run.
         base_namespace(str, optional): Namespace inside the Run where your study metadata is logged. Defaults to ''.
-        target_names(Union[List[str], str], optional): Names of the study objectives to log (i.e., "Accuracy"). Defaults to None.
+        target_names(List[str], optional): Names of the study objectives to log (i.e., "Accuracy"). Defaults to None.
         plots_update_freq(int, str, optional): Frequency at which plots are logged and updated in Neptune.
             If you pass integer value k, plots will be updated every k iterations.
             If you pass the string 'never', plots will not be logged. Defaults to 1.
@@ -113,7 +113,7 @@ class NeptuneCallback:
     def __init__(self,
                  run: neptune.Run,
                  base_namespace: str = '',
-                 target_names: Union[List[str], str] = None,
+                 target_names: List[str] = None,
                  plots_update_freq: Union[int, str] = 1,
                  study_update_freq: Union[int, str] = 1,
                  visualization_backend: str = 'plotly',
@@ -129,7 +129,7 @@ class NeptuneCallback:
         expect_not_an_experiment(run)
         verify_type('run', run, neptune.Run)
         verify_type('base_namespace', base_namespace, str)
-
+        verify_type('target_names', target_names, (List[str], type(None)))
         verify_type('log_plots_freq', plots_update_freq, (int, str, type(None)))
         verify_type('log_study_freq', study_update_freq, (int, str, type(None)))
         verify_type('visualization_backend', visualization_backend, (str, type(None)))
@@ -143,7 +143,8 @@ class NeptuneCallback:
         verify_type('log_plot_optimization_history', log_plot_optimization_history, (bool, type(None)))
 
         self.run = run[base_namespace]
-        self.target_names = target_names
+        self._target_names = target_names
+        self._namespaces = ''
         self._visualization_backend = visualization_backend
         self._plots_update_freq = plots_update_freq
         self._study_update_freq = study_update_freq
@@ -161,17 +162,17 @@ class NeptuneCallback:
 
 
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial):
-        self.namespaces = get_namespaces(study, self.target_names)
+        self._namespaces = get_namespaces(study, self._target_names)
         self._log_trial(study, trial)
         self._log_trial_distributions(trial)
         self._log_study_details(study, trial)
         self._log_plots(study, trial)
         self._log_study(study, trial)
-        _log_best_trials(self.run, study, self.namespaces)
+        _log_best_trials(self.run, study, self._namespaces)
 
     # is this for a single trial?
     def _log_trial(self, study, trial):
-        _log_single_trial(self.run, study, trial=trial, namespaces=self.namespaces)
+        _log_single_trial(self.run, study, trial=trial, namespaces=self._namespaces)
 
     def _log_trial_distributions(self, trial):
         self.run['study/distributions'].log(trial.distributions)
@@ -184,7 +185,7 @@ class NeptuneCallback:
     def _log_plots(self, study, trial):
         if self._should_log_plots(study, trial):
             _log_plots(self.run, study,
-                       namespaces=self.namespaces,
+                       namespaces=self._namespaces,
                        visualization_backend=self._visualization_backend,
                        log_plot_contour=self._log_plot_contour,
                        log_plot_edf=self._log_plot_edf,
@@ -245,7 +246,7 @@ def get_namespaces(
 def log_study_metadata(study: optuna.Study,
                        run: neptune.Run,
                        base_namespace='',
-                       target_names: Union[List[str], str] = None,
+                       target_names: List[str] = None,
                        log_plots=True,
                        log_study=True,
                        log_all_trials=True,
