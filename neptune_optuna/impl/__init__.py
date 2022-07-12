@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-from typing import Iterable, Callable, Union, Tuple, List, Optional
+from typing import Iterable, Union, List, Optional
 
 import contextlib
 import optuna
