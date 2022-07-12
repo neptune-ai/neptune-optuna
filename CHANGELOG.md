@@ -1,4 +1,4 @@
-## neptune-optuna 1.0.0
+## [UNRELEASED] neptune-optuna 1.0.0
 
 ### Features
 
