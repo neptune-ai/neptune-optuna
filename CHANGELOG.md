@@ -1,4 +1,4 @@
-## neptune-optuna 0.9.15
+## neptune-optuna 1.0.0
 
 ### Fixes
 - Log best trial post-training ([#14](https://github.com/neptune-ai/neptune-optuna/pull/14))
