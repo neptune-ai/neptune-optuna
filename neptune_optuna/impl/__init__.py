@@ -234,12 +234,20 @@ def get_namespaces(
         if target_names is None:
             return list(map(lambda direction_index: f'objective_{direction_index}', range(len(study.directions))))
 
-        assert len(target_names) == len(study.directions), "target_name list must be of the same length as study.directions"
+        assert len(target_names) == len(study.directions), \
+            """
+            The target_names list must be th same length as study.directions.
+            target_names length: {} != study.directions length: {}
+            """.format(len(target_names), len(study.directions))
         return target_names
     else:
         if target_names is None:
             return 'Objective Value'
-        assert len(target_names) == 1, "target_name list must be of the same length as study.directions"
+        assert len(target_names) == len(study.direction), \
+            """
+            The target_names list must be th same length as study.direction.
+            target_names length: {} != study.direction length: {}
+            """.format(len(target_names), len(study.direction))
         return target_names[0]
 
 
