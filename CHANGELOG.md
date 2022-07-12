@@ -1,8 +1,14 @@
 ## neptune-optuna 1.0.0
 
+<<<<<<< HEAD
 ### Fixes
 
 - Log best trial post-training ([#14](https://github.com/neptune-ai/neptune-optuna/pull/14))
+=======
+### Features
+
+- Add support for multi-objective training ([#13](https://github.com/neptune-ai/neptune-optuna/pull/13))
+>>>>>>> 877b3007f71e5277ccf86764003ffe943c875f61
 
 ## neptune-optuna 0.9.14
 

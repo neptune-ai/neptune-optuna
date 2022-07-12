@@ -231,7 +231,11 @@ def _log_best_trials(run, study: optuna.Study, namespaces: List[str] = None):
 def get_namespaces(
     study: optuna.Study,
     target_names: List[str] = None
+<<<<<<< HEAD
     ) -> Tuple[Optional[List[Callable[[list], int]]], Optional[List[str]]]:
+=======
+    ) -> Optional[List[str]]:
+>>>>>>> 877b3007f71e5277ccf86764003ffe943c875f61
 
     if study._is_multi_objective():
         if target_names is None:
@@ -499,7 +503,7 @@ def _log_plots(run,
         handle['plot_pareto_front'] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=namespaces))
 
 
-def _get_trial_attrs(run, study, trial, namespaces, best=False):
+def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False):
     handle = run['best'] if best else run['trials']
 
     handle[f'trials/{trial._trial_id}/datetime_start'] = trial.datetime_start
@@ -526,10 +530,6 @@ def _get_trial_attrs(run, study, trial, namespaces, best=False):
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
         handle[f'trials/{trial._trial_id}/state'] = repr(trial.state)
-
-
-def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False):
-    _get_trial_attrs(run, study, trial, namespaces, best=best)
 
 
 def _log_trials(run, study: optuna.Study, trials: Iterable[optuna.trial.FrozenTrial], namespaces, best=False):
