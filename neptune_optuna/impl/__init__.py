@@ -22,6 +22,7 @@ __all__ = [
 
 from typing import Iterable, Callable, Union, Tuple, List, Optional
 
+import contextlib
 import optuna
 
 from neptune_optuna import __version__
@@ -211,9 +212,8 @@ class NeptuneCallback:
     def _should_log_study(self, trial: optuna.trial.FrozenTrial):
         if self._study_update_freq == 'never':
             return False
-        else:
-            if trial._trial_id % self._study_update_freq == 0:
-                return True
+        if trial._trial_id % self._study_update_freq == 0:
+            return True
         return False
 
     def _log_best_trials(self, study: optuna.Study):
@@ -231,22 +231,19 @@ def _log_best_trials(run, study: optuna.Study, namespaces: List[str] = None):
 def get_namespaces(
     study: optuna.Study,
     target_names: List[str] = None
-    )-> Tuple[Optional[List[Callable[[list], int]]], Optional[List[str]]]:
+    ) -> Tuple[Optional[List[Callable[[list], int]]], Optional[List[str]]]:
 
     if study._is_multi_objective():
         if target_names is None:
-            namespaces = list(map(lambda direction_index: f'objective_{direction_index}', range(len(study.directions))))
-            return namespaces
-        else:
-            assert len(target_names) == len(study.directions), "target_name list must be of the same length as study.directions"
-            return target_names
+            return list(map(lambda direction_index: f'objective_{direction_index}', range(len(study.directions))))
+
+        assert len(target_names) == len(study.directions), "target_name list must be of the same length as study.directions"
+        return target_names
     else:
         if target_names is None:
-            namespace = 'Objective Value'
-            return namespace
-        else:
-            assert len(target_names) == 1, "target_name list must be of the same length as study.directions"
-            return target_names[0]
+            return 'Objective Value'
+        assert len(target_names) == 1, "target_name list must be of the same length as study.directions"
+        return target_names[0]
 
 
 def log_study_metadata(study: optuna.Study,
@@ -409,21 +406,18 @@ def _log_study_details(run, study: optuna.Study):
 
     run['study/system_attrs'] = study.system_attrs
     run['study/user_attrs'] = study.user_attrs
-    try:
+    with contextlib.suppress(AttributeError):
         run['study/_study_id'] = study._study_id
         run['study/_storage'] = study._storage
-    except AttributeError:
-        pass
 
 
 def _log_study(run, study: optuna.Study):
-    try:
+    with contextlib.suppress(AttributeError):
         if type(study._storage) is optuna.storages._in_memory.InMemoryStorage:
             """pickle and log the study object to the 'study/study.pkl' path"""
             run['study/study_name'] = study.study_name
             run['study/storage_type'] = 'InMemoryStorage'
             run['study/study'] = File.as_pickle(study)
-            pass
         else:
             run['study/study_name'] = study.study_name
             if isinstance(study._storage, optuna.storages.RedisStorage):
@@ -438,8 +432,6 @@ def _log_study(run, study: optuna.Study):
             else:
                 run['study/storage_type'] = "unknown storage type"
                 run['study/storage_url'] = "unknown storage url"
-    except AttributeError:
-        pass
 
 
 def _log_plots(run,
@@ -476,7 +468,7 @@ def _log_plots(run,
 
 
         if vis.is_available:
-            params = list(p_name for t in study.trials for p_name in t.params.keys())
+            params = [p_name for t in study.trials for p_name in t.params.keys()]
 
             if log_plot_contour and any(params):
                 temp_handle['plot_contour'] = neptune.types.File.as_html(vis.plot_contour(study, target=target, target_name=target_name))
@@ -489,12 +481,8 @@ def _log_plots(run,
                     neptune.types.File.as_html(vis.plot_parallel_coordinate(study, target=target, target_name=target_name))
 
             if log_plot_param_importances and len(study.get_trials(states=(optuna.trial.TrialState.COMPLETE, optuna.trial.TrialState.PRUNED,))) > 1:
-                try:
+                with contextlib.suppress(RuntimeError, ValueError, ZeroDivisionError):
                     temp_handle['plot_param_importances'] = neptune.types.File.as_html(vis.plot_param_importances(study, target=target, target_name=target_name))
-                except (RuntimeError, ValueError, ZeroDivisionError):
-                    # Unable to compute importances
-                    pass
-
             if log_plot_slice and any(params):
                 temp_handle['plot_slice'] = neptune.types.File.as_html(vis.plot_slice(study, target=target, target_name=target_name))
 
@@ -522,7 +510,8 @@ def _get_trial_attrs(run, study, trial, namespaces, best=False):
     handle[f'trials/{trial._trial_id}/params'] = trial.params
 
     if study._is_multi_objective():
-        handle[f'trials/{trial._trial_id}/values'] = dict((f'{namespaces[k]}',v) for k, v in enumerate(trial.values))
+        handle[f'trials/{trial._trial_id}/values'] = {f'{namespaces[k]}': v for k, v in enumerate(trial.values)}
+
     else:
         handle[f'trials/{trial._trial_id}/value'] = trial.value
 
