@@ -227,7 +227,7 @@ def _log_best_trials(run, study: optuna.Study, namespaces):
 def get_namespaces(
     study: optuna.Study,
     target_names: List[str] = None
-    ) -> Tuple[Optional[List[Callable[[list], int]]], Optional[List[str]]]:
+    ) -> Optional[List[str]]:
 
     if study._is_multi_objective():
         if target_names is None:
