@@ -176,7 +176,8 @@ class NeptuneCallback:
         run[INTEGRATION_VERSION_KEY] = __version__
 
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial):
-        self._namespaces = get_namespaces(study, self._target_names)
+        if self._namespaces is None:
+            self._namespaces = get_namespaces(study, self._target_names)
         self._log_trial(study, trial)
         self._log_trial_distributions(trial)
         self._log_study_details(study, trial)
