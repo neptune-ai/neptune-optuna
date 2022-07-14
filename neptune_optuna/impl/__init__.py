@@ -114,7 +114,7 @@ class NeptuneCallback:
         self,
         run: neptune.Run,
         base_namespace: str = "",
-        target_names: List[str] = None,
+        target_names: Optional[List[str]] = None,
         plots_update_freq: Union[int, str] = 1,
         study_update_freq: Union[int, str] = 1,
         visualization_backend: str = "plotly",
@@ -131,7 +131,7 @@ class NeptuneCallback:
         expect_not_an_experiment(run)
         verify_type("run", run, neptune.Run)
         verify_type("base_namespace", base_namespace, str)
-        verify_type("target_names", target_names, (List[str], type(None)))
+        verify_type("target_names", target_names, (Optional[List[str]], type(None)))
         verify_type("log_plots_freq", plots_update_freq, (int, str, type(None)))
         verify_type("log_study_freq", study_update_freq, (int, str, type(None)))
         verify_type("visualization_backend", visualization_backend, (str, type(None)))
@@ -252,7 +252,7 @@ def _log_best_trials(run, study: optuna.Study, namespaces: List[str] = None):
 
 
 def get_namespaces(
-    study: optuna.Study, target_names: List[str] = None
+    study: optuna.Study, target_names: Optional[List[str]] = None
 ) -> Optional[List[str]]:
 
     if study._is_multi_objective():
@@ -291,7 +291,7 @@ def log_study_metadata(
     study: optuna.Study,
     run: neptune.Run,
     base_namespace="",
-    target_names: List[str] = None,
+    target_names: Optional[List[str]] = None,
     log_plots=True,
     log_study=True,
     log_all_trials=True,
