@@ -160,7 +160,7 @@ class NeptuneCallback:
 
         self.run = run[base_namespace]
         self._target_names = target_names
-        self._namespaces = ""
+        self._namespaces = None
         self._visualization_backend = visualization_backend
         self._plots_update_freq = plots_update_freq
         self._study_update_freq = study_update_freq
