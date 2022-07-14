@@ -177,7 +177,7 @@ class NeptuneCallback:
 
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial):
         if self._namespaces is None:
-            self._namespaces = get_namespaces(study, self._target_names)
+            self._namespaces = _get_namespaces(study, self._target_names)
         self._log_trial(study, trial)
         self._log_trial_distributions(trial)
         self._log_study_details(study, trial)
@@ -241,7 +241,7 @@ class NeptuneCallback:
 def _log_best_trials(run, study: optuna.Study, namespaces: List[str] = None):
     if study._is_multi_objective():
         if namespaces is None:
-            namespaces = get_namespaces(study)
+            namespaces = _get_namespaces(study)
         _log_trials(
             run, study, trials=study.best_trials, namespaces=namespaces, best=True
         )
@@ -251,7 +251,7 @@ def _log_best_trials(run, study: optuna.Study, namespaces: List[str] = None):
         )
 
 
-def get_namespaces(
+def _get_namespaces(
     study: optuna.Study, target_names: Optional[List[str]] = None
 ) -> Optional[List[str]]:
 
@@ -376,7 +376,7 @@ def log_study_metadata(
     """
     run = run[base_namespace]
 
-    namespaces = get_namespaces(study, target_names)
+    namespaces = _get_namespaces(study, target_names)
 
     _log_best_trials(run, study, namespaces)
     _log_study_details(run, study)
