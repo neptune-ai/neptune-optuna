@@ -257,12 +257,7 @@ def _get_namespaces(
 
     if study._is_multi_objective():
         if target_names is None:
-            return list(
-                map(
-                    lambda direction_index: f"objective_{direction_index}",
-                    range(len(study.directions)),
-                )
-            )
+            return [f"objective_{index}" for index in range(len(study.directions))]
 
         assert len(target_names) == len(
             study.directions
