@@ -184,7 +184,6 @@ class NeptuneCallback:
         self._log_plots(study, trial)
         self._log_study(study, trial)
 
-    # is this for a single trial?
     def _log_trial(self, study, trial):
         _log_single_trial(self.run, study, trial=trial, namespaces=self._namespaces)
 
