@@ -253,7 +253,7 @@ def _log_best_trials(run, study: optuna.Study, namespaces: List[str] = None):
 
 def _get_namespaces(
     study: optuna.Study, target_names: Optional[List[str]] = None
-) -> Optional[List[str]]:
+) -> Union[List[str], str]:
 
     if study._is_multi_objective():
         if target_names is None:
