@@ -183,6 +183,7 @@ class NeptuneCallback:
         self._log_study_details(study, trial)
         self._log_plots(study, trial)
         self._log_study(study, trial)
+        self._log_best_trials(study)
 
     def _log_trial(self, study, trial):
         _log_single_trial(self.run, study, trial=trial, namespaces=self._namespaces)
@@ -234,21 +235,23 @@ class NeptuneCallback:
             return True
         return False
 
-    def log_best_trials(self, study: optuna.Study):
-        _log_best_trials(self.run, study, namespaces=self._namespaces)
-
-
-def _log_best_trials(run, study: optuna.Study, namespaces: List[str] = None):
-    if study._is_multi_objective():
-        if namespaces is None:
-            namespaces = _get_namespaces(study)
-        _log_trials(
-            run, study, trials=study.best_trials, namespaces=namespaces, best=True
-        )
-    else:
-        _log_single_trial(
-            run, study, trial=study.best_trial, namespaces=namespaces, best=True
-        )
+    def _log_best_trials(self, run, study: optuna.Study):
+        if study._is_multi_objective():
+            _log_trials(
+                run,
+                study,
+                trials=study.best_trials,
+                namespaces=self._namespaces,
+                best=True,
+            )
+        else:
+            _log_single_trial(
+                run,
+                study,
+                trial=study.best_trial,
+                namespaces=self._namespaces,
+                best=True,
+            )
 
 
 def _get_namespaces(
