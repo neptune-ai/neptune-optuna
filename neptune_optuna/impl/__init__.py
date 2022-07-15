@@ -270,7 +270,7 @@ def _get_namespaces(
 
     else:
         if target_names is None:
-            return "Objective Value"
+            return "objective_value"
 
         assert len(target_names) == len(
             study.directions
