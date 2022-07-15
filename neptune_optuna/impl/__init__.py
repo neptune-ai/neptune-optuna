@@ -273,10 +273,10 @@ def _get_namespaces(
             return "objective_value"
 
         assert len(target_names) == len(
-            study.directions
+            [study.direction]
         ), f"""
             The target_names list must be th same length as study.direction.
-            target_names length: {len(target_names)} != study.directions length: {len(study.directions)}
+            target_names length: {len(target_names)} != study.directions length: {len([study.direction])}
             """
 
         return target_names[0]
