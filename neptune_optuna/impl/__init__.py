@@ -625,7 +625,7 @@ def _log_trials(
     best=False,
 ):
     if not study.best_trials and best:
-        return {}
+        return None
     for trial in trials:
         _log_single_trial(run, study, trial, namespaces, best=best)
 
