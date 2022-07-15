@@ -131,7 +131,7 @@ class NeptuneCallback:
         expect_not_an_experiment(run)
         verify_type("run", run, neptune.Run)
         verify_type("base_namespace", base_namespace, str)
-        verify_type("target_names", target_names, (Optional[List[str]], type(None)))
+        verify_type("target_names", target_names, (list, type(None)))
         verify_type("log_plots_freq", plots_update_freq, (int, str, type(None)))
         verify_type("log_study_freq", study_update_freq, (int, str, type(None)))
         verify_type("visualization_backend", visualization_backend, (str, type(None)))
