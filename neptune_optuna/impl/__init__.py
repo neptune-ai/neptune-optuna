@@ -43,71 +43,76 @@ INTEGRATION_VERSION_KEY = "source_code/integrations/neptune-optuna"
 
 
 class NeptuneCallback:
-    """A callback that logs the metadata from Optuna Study to Neptune.
+    """A callback that logs metadata from an Optuna study to Neptune.
 
     With this callback, you can log and display:
 
-    * values and params for each trial
-    * current best values and params for the study
-    * visualizations from the `optuna.visualizations` module
-    * parameter distributions for each trial
-    * study object itself to load it later
-    * and more
+    * Values and parameters for each trial.
+    * Current best values and parameters for the study.
+    * Visualizations from the optuna.visualizations module.
+    * Parameter distributions for each trial.
+    * The study object itself, to load it later.
 
     Args:
-        run(neptune.Run): Neptune Run.
-        base_namespace(str, optional): Namespace inside the Run where your study metadata is logged. Defaults to ''.
-        target_names(List[str], optional): Names of the study objectives to log (i.e., "Accuracy"). Defaults to None.
-        plots_update_freq(int, str, optional): Frequency at which plots are logged and updated in Neptune.
-            If you pass integer value k, plots will be updated every k iterations.
-            If you pass the string 'never', plots will not be logged. Defaults to 1.
-        study_update_freq(int, str, optional): It is a frequency at which a study object is logged and updated in Neptune.
-            If you pass integer value k, the study will be updated every k iterations.
-            If you pass the string 'never', plots will not be logged. Defaults to 1.
-        visualization_backend(str, optional): Which visualization backend is used for 'optuna.visualizations' plots.
-            It can be one of 'matplotlib' or 'plotly'. Defaults to 'plotly'.
-        log_plot_contour(bool, optional): If 'True' the `optuna.visualizations.plot_contour`
-            visualization will be logged to Neptune. Defaults to `True`.
-        log_plot_edf(bool, optional): If 'True' the `optuna.visualizations.plot_edf`
-            visualization will be logged to Neptune. Defaults to `True`.
-        log_plot_parallel_coordinate(bool, optional): If 'True' the `optuna.visualizations.plot_parallel_coordinate`
-            visualization will be logged to Neptune. Defaults to `True`.
-        log_plot_param_importances(bool, optional): If 'True' the `optuna.visualizations.plot_param_importances`
-            visualization will be logged to Neptune. Defaults to `True`.
-        log_plot_pareto_front(bool, optional): If 'True' the `optuna.visualizations.plot_pareto_front`
+        run: Neptune run.
+        base_namespace: Namespace inside the run where your study metadata is logged.
+        target_names: Names of the study objectives to log (such as "Accuracy").
+        plots_update_freq: Frequency at which plots are logged and updated in Neptune.
+            If you pass an integer k, plots will be updated every k iterations.
+            If you pass the string 'never', plots will not be logged.
+        study_update_freq: Frequency at which a study object is logged and updated in Neptune.
+            If you pass an integer k, the study will be updated every k iterations.
+            If you pass the string 'never', plots will not be logged.
+        visualization_backend: Which visualization backend is used for optuna.visualizations plots.
+            Can be either 'matplotlib' or 'plotly'.
+        log_plot_contour: If True, the optuna.visualizations.plot_contour
             visualization will be logged to Neptune.
-            If your `optuna.study` is not multi-objective this plot is not logged. Defaults to `True`.
-        log_plot_slice(bool, optional): If 'True' the `optuna.visualizations.plot_slice`
-            visualization will be logged to Neptune. Defaults to `True`.
-        log_plot_intermediate_values(bool, optional): If 'True' the `optuna.visualizations.plot_intermediate_values`
+        log_plot_edf: If True, the optuna.visualizations.plot_edf
             visualization will be logged to Neptune.
-            If your `optuna.study` is not using pruners this plot is not logged. Defaults to `True`. Defaults to `True`.
-        log_plot_optimization_history(bool, optional): If 'True' the `optuna.visualizations.plot_optimization_history`
-            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_parallel_coordinate: If True, the optuna.visualizations.plot_parallel_coordinate
+            visualization will be logged to Neptune.
+        log_plot_param_importances: If True, the optuna.visualizations.plot_param_importances
+            visualization will be logged to Neptune.
+        log_plot_pareto_front: If True, the optuna.visualizations.plot_pareto_front
+            visualization will be logged to Neptune.
+            If your optuna.study is not multi-objective, this plot is not logged.
+        log_plot_slice: If True, the optuna.visualizations.plot_slice
+            visualization will be logged to Neptune.
+        log_plot_intermediate_values: If True, the optuna.visualizations.plot_intermediate_values
+            visualization will be logged to Neptune.
+            If your optuna.study is not using pruners, this plot is not logged.
+        log_plot_optimization_history: If True, the optuna.visualizations.plot_optimization_history
+            visualization will be logged to Neptune.
 
     Examples:
-        Create a Run:
+        Create a run:
         >>> import neptune.new as neptune
-        ... run = neptune.init('my_workspace/my_project')
+        ... run = neptune.init_run()
 
         Initialize a NeptuneCallback:
         >>> import neptune.new.integrations.optuna as optuna_utils
         ... neptune_callback = optuna_utils.NeptuneCallback(run)
 
-        Or `optionally` pass a list of objective names:
-            Single objective:
-            ... neptune_callback = optuna_utils.NeptuneCallback(run, target_names=['accuracy'])
-            Multi-objective:
-            ... neptune_callback = optuna_utils.NeptuneCallback(run, target_names=['FLOPS', 'accuracy'])
+        Or optionally pass a list of objective names:
+        Single objective:
+        ... neptune_callback = optuna_utils.NeptuneCallback(
+        ...     run,
+        ...     target_names=["accuracy"],
+        ... )
+        Multi-objective:
+        ... neptune_callback = optuna_utils.NeptuneCallback(
+        ...     run,
+        ...     target_names=["FLOPS", "accuracy"],
+        ... )
 
-        Log single and multi-objective Study metadata to Neptune by passing NeptuneCallback to the Optuna Study:
-        >>> study = optuna.create_study(direction='maximize')
+        Log single and multi-objective study metadata to Neptune
+        by passing the callback to the Optuna study:
+        >>> study = optuna.create_study(direction="maximize")
         ... study.optimize(objective, n_trials=5, callbacks=[neptune_callback])
 
 
-    For more information, see `Neptune-Optuna integration docs page`_.
-    .. _Neptune Optuna integration docs page:
-       https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+    For more information, see the Neptune-Optuna integration docs page:
+    https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
     """
 
     def __init__(
@@ -190,7 +195,7 @@ class NeptuneCallback:
 
     def _log_trial_distributions(self, trial):
         self.run["study/distributions"].log(trial.distributions)
-    
+
     def _log_best_trials(self, study):
         _log_best_trials(self.run, study, self._namespaces)
 
@@ -269,7 +274,7 @@ def _get_namespaces(
         assert len(target_names) == len(
             study.directions
         ), f"""
-            The target_names list must be th same length as study.directions.
+            The target_names list must be the same length as study.directions.
             target_names length: {len(target_names)} != study.directions length: {len(study.directions)}
             """
 
@@ -282,7 +287,7 @@ def _get_namespaces(
         assert len(target_names) == len(
             [study.direction]
         ), f"""
-            The target_names list must be th same length as study.direction.
+            The target_names list must be the same length as study.direction.
             target_names length: {len(target_names)} != study.directions length: {len([study.direction])}
             """
 
@@ -308,73 +313,78 @@ def log_study_metadata(
     log_plot_intermediate_values=True,
     log_plot_optimization_history=True,
 ):
-    """A function that logs the metadata from Optuna Study to Neptune.
+    """Logs the metadata from the Optuna study to Neptune.
 
     With this function, you can log and display:
 
-    * values and params for each trial
-    * current best values and params for the study
-    * visualizations from the `optuna.visualizations` module
-    * parameter distributions for each trial
-    * study object itself to load it later
-    * and more
+    * Values and params for each trial.
+    * Current best values and params for the study.
+    * Visualizations from the optuna.visualizations module.
+    * Parameter distributions for each trial.
+    * The study object itself, to load it later.
 
     Args:
-        study(optuna.Study): Optuna study object.
-        run(neptune.Run): Neptune Run.
-        base_namespace(str, optional): Namespace inside the Run where your study metadata is logged. Defaults to ''.
-        target_names(List[str], optional): List of objective names if `optuna.study` is multi-objective. Defaults to None.
-        log_plots(bool): If 'True' the visualiztions from `optuna.visualizations` will be logged to Neptune.
-            Defaults to 'True'.
-        log_study(bool): If 'True' the study will be logged to Neptune. Depending on the study storage type used
-            different objects are logged. If 'InMemoryStorage' is used the pickled study
-            object will be logged to Neptune. Otherwise database URL will be logged. Defaults to 'True'.
-        log_all_trials(bool): If 'True' all trials are logged. Defaults to 'True'.
-        log_distributions(bool): If 'True' the distributions for all trials are logged. Defaults to 'True'.
-        visualization_backend(str, optional): Which visualization backend is used for 'optuna.visualizations' plots.
-            It can be one of 'matplotlib' or 'plotly'. Defaults to 'plotly'.
-        log_plot_contour(bool, optional): If 'True' the `optuna.visualizations.plot_contour`
-            visualization will be logged to Neptune. Defaults to `True`.
-        log_plot_edf(bool, optional): If 'True' the `optuna.visualizations.plot_edf`
-            visualization will be logged to Neptune. Defaults to `True`.
-        log_plot_parallel_coordinate(bool, optional): If 'True' the `optuna.visualizations.plot_parallel_coordinate`
-            visualization will be logged to Neptune. Defaults to `True`.
-        log_plot_param_importances(bool, optional): If 'True' the `optuna.visualizations.plot_param_importances`
-            visualization will be logged to Neptune. Defaults to `True`.
-        log_plot_pareto_front(bool, optional): If 'True' the `optuna.visualizations.plot_pareto_front`
+        study: Optuna study object.
+        run: Neptune run.
+        base_namespace: Namespace inside the run where your study metadata is logged.
+        target_names: List of objective names if optuna.study is multi-objective.
+        log_plots: If True, the visualiztions from optuna.visualizations will be logged to Neptune.
+        log_study: If True, the study will be logged to Neptune. The objects that are logged depends
+            on the study storage type used: If 'InMemoryStorage' is used, the pickled study
+            object will be logged to Neptune. Otherwise the database URL will be logged.
+        log_all_trials: If True, all trials are logged.
+        log_distributions: If True, the distributions for all trials are logged.
+        visualization_backend: Which visualization backend is used for 'optuna.visualizations' plots.
+            Can be set to either 'matplotlib' or 'plotly'.
+        log_plot_contour: If True the optuna.visualizations.plot_contour
             visualization will be logged to Neptune.
-            If your `optuna.study` is not multi-objective this plot is not logged. Defaults to `True`.
-        log_plot_slice(bool, optional): If 'True' the `optuna.visualizations.plot_slice`
-            visualization will be logged to Neptune. Defaults to `True`.
-        log_plot_intermediate_values(bool, optional): If 'True' the `optuna.visualizations.plot_intermediate_values`
+        log_plot_edf: If True the optuna.visualizations.plot_edf
             visualization will be logged to Neptune.
-            If your `optuna.study` is not using pruners this plot is not logged. Defaults to `True`. Defaults to `True`.
-        log_plot_optimization_history(bool, optional): If 'True' the `optuna.visualizations.plot_optimization_history`
-            visualization will be logged to Neptune. Defaults to `True`.
+        log_plot_parallel_coordinate: If True the optuna.visualizations.plot_parallel_coordinate
+            visualization will be logged to Neptune. Defaults to True.
+        log_plot_param_importances: If True the optuna.visualizations.plot_param_importances
+            visualization will be logged to Neptune. Defaults to True.
+        log_plot_pareto_front: If True the optuna.visualizations.plot_pareto_front
+            visualization will be logged to Neptune.
+            If your optuna.study is not multi-objective this plot is not logged.
+        log_plot_slice: If True, the optuna.visualizations.plot_slice
+            visualization will be logged to Neptune.
+        log_plot_intermediate_values: If True, the optuna.visualizations.plot_intermediate_values
+            visualization will be logged to Neptune.
+            If your optuna.study is not using pruners, this plot is not logged.
+        log_plot_optimization_history: If True, the optuna.visualizations.plot_optimization_history
+            visualization will be logged to Neptune.
 
     Examples:
-        Create a Run:
+        Create a run:
         >>> import neptune.new as neptune
-        ... run = neptune.init('my_workspace/my_project')
+        ... run = neptune.init_run()
 
-        Create and run the Study:
-        >>> study = optuna.create_study(direction='maximize')
+        Create and run the study:
+        >>> study = optuna.create_study(direction="maximize")
         ... study.optimize(objective, n_trials=5)
 
-        Log single and multi-objective Study metadata to Neptune:
+        Log single and multi-objective study metadata to Neptune:
         >>> import neptune.new.integrations.optuna as optuna_utils
         ... optuna_utils.log_study_metadata(study, run)
 
-        Or `optionally` pass a list of objective names:
-            Single-objective:
-            ... optuna_utils.log_study_metadata(study, run, target_names=['accuracy'])
-            Multi-objective:
-            ... optuna_utils.log_study_metadata(study, run, target_names=['FLOPS', 'accuracy'])
+        Or optionally pass a list of objective names:
+        Single-objective:
+        ... optuna_utils.log_study_metadata(
+        ...    study,
+        ...    run,
+        ...    target_names=["accuracy"],
+        ... )
+        Multi-objective:
+        ... optuna_utils.log_study_metadata(
+        ...     study,
+        ...     run,
+        ...     target_names=["FLOPS", "accuracy"],
+        ... )
 
 
-    For more information, see `Neptune-Optuna integration docs page`_.
-    .. _Neptune Optuna integration docs page:
-       https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+    For more information, see the Neptune-Optuna integration docs page:
+    https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
     """
     run = run[base_namespace]
 
@@ -410,31 +420,32 @@ def log_study_metadata(
 
 
 def load_study_from_run(run: neptune.Run):
-    """A function that loads Optuna Study from an existing Neptune Run.
+    """Loads Optuna study from an existing Neptune run.
 
-    Loading mechanics depends on the study storage type used during the Neptune Run:
-    * if the study used 'InMemoryStorage', it will be loaded from the logged pickled Study object
-    * if the study used database storage, it will be loaded from the logged database URL
+    Loading mechanics depends on the study storage type used during the run:
+    - If the study used 'InMemoryStorage', it will be loaded from the logged pickled study object.
+    - If the study used database storage, it will be loaded from the logged database URL.
+    
+    To resume an existing run, you need the run ID. It is stored in the run's "sys/id" field.
 
     Args:
-        run(neptune.Run): Neptune Run.
+        run: Neptune run.
 
     Returns:
-        optuna.Study
+        Optuna study.
 
     Examples:
-        Initialize an existing Run by passing Run ID:
+        Initialize an existing run by passing the run ID:
         >>> import neptune.new as neptune
-        ... run = neptune.init('my_workspace/my_project', run='PRO-123')
+        ... run = neptune.init_run(run="PRO-123")
 
-        Load study from a Run and continue optimization:
+        Load study from the run and continue optimization:
         >>> import neptune_optuna.impl as optuna_utils
         ... study = optuna_utils.load_study_from_run(run)
         ... study.optimize(objective, n_trials=20)
 
-    For more information, see `Neptune-Optuna integration docs page`_.
-    .. _Neptune Optuna integration docs page:
-       https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+    For more information, see the Neptune-Optuna integration docs page:
+    https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
     """
     if run["study/storage_type"].fetch() == "InMemoryStorage":
         return _get_pickle(path="study/study", run=run)
