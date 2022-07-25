@@ -328,8 +328,8 @@ def log_study_metadata(
         run: Neptune run.
         base_namespace: Namespace inside the run where your study metadata is logged.
         target_names: List of objective names if optuna.study is multi-objective.
-        log_plots: If True, the visualiztions from optuna.visualizations will be logged to Neptune.
-        log_study: If True, the study will be logged to Neptune. The objects that are logged depends
+        log_plots: If True, the visualizations from optuna.visualizations will be logged to Neptune.
+        log_study: If True, the study will be logged to Neptune. The objects that are logged depend
             on the study storage type used: If 'InMemoryStorage' is used, the pickled study
             object will be logged to Neptune. Otherwise the database URL will be logged.
         log_all_trials: If True, all trials are logged.
@@ -422,7 +422,7 @@ def log_study_metadata(
 def load_study_from_run(run: neptune.Run):
     """Loads Optuna study from an existing Neptune run.
 
-    Loading mechanics depends on the study storage type used during the run:
+    Loading mechanics depend on the study storage type used during the run:
     - If the study used 'InMemoryStorage', it will be loaded from the logged pickled study object.
     - If the study used database storage, it will be loaded from the logged database URL.
     
