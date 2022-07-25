@@ -53,6 +53,7 @@ results-*.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+.pre-commit-config.yaml
 
 # Translations
 *.mo
