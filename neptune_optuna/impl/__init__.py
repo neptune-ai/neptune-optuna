@@ -621,15 +621,9 @@ def _log_single_trial(
 
     else:
         handle[f"trials/{trial._trial_id}/value"] = trial.value
-
-        if best:
-            handle["value"] = trial.value
-            handle["param"] = trial.params
-            handle["value|param"] = f"value: {trial.value}| params: {trial.params}"
-        else:
-            handle["values"].log(trial.value, step=trial._trial_id)
-            handle["params"].log(trial.params)
-            handle["values|params"].log(f"value: {trial.value}| params: {trial.params}")
+        handle["values"].log(trial.value, step=trial._trial_id)
+        handle["params"].log(trial.params)
+        handle["values|params"].log(f"value: {trial.value}| params: {trial.params}")
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
         handle[f"trials/{trial._trial_id}/state"] = repr(trial.state)
