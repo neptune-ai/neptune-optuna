@@ -56,7 +56,6 @@ class NeptuneCallback:
     Args:
         run: Neptune run.
         base_namespace: Namespace inside the run where your study metadata is logged.
-        target_names: Names of the study objectives to log (such as "Accuracy").
         plots_update_freq: Frequency at which plots are logged and updated in Neptune.
             If you pass an integer k, plots will be updated every k iterations.
             If you pass the string 'never', plots will not be logged.
@@ -83,6 +82,7 @@ class NeptuneCallback:
             If your optuna.study is not using pruners, this plot is not logged.
         log_plot_optimization_history: If True, the optuna.visualizations.plot_optimization_history
             visualization will be logged to Neptune.
+        target_names: Names of the study objectives to log (such as "Accuracy").
 
     Examples:
         Create a run:
@@ -119,7 +119,6 @@ class NeptuneCallback:
         self,
         run: neptune.Run,
         base_namespace: str = "",
-        target_names: Optional[List[str]] = None,
         plots_update_freq: Union[int, str] = 1,
         study_update_freq: Union[int, str] = 1,
         visualization_backend: str = "plotly",
@@ -131,12 +130,12 @@ class NeptuneCallback:
         log_plot_slice: bool = True,
         log_plot_intermediate_values: bool = True,
         log_plot_optimization_history: bool = True,
+        target_names: Optional[List[str]] = None,
     ):
 
         expect_not_an_experiment(run)
         verify_type("run", run, neptune.Run)
         verify_type("base_namespace", base_namespace, str)
-        verify_type("target_names", target_names, (list, type(None)))
         verify_type("log_plots_freq", plots_update_freq, (int, str, type(None)))
         verify_type("log_study_freq", study_update_freq, (int, str, type(None)))
         verify_type("visualization_backend", visualization_backend, (str, type(None)))
@@ -162,10 +161,9 @@ class NeptuneCallback:
             log_plot_optimization_history,
             (bool, type(None)),
         )
+        verify_type("target_names", target_names, (list, type(None)))
 
         self.run = run[base_namespace]
-        self._target_names = target_names
-        self._namespaces = None
         self._visualization_backend = visualization_backend
         self._plots_update_freq = plots_update_freq
         self._study_update_freq = study_update_freq
@@ -177,6 +175,8 @@ class NeptuneCallback:
         self._log_plot_slice = log_plot_slice
         self._log_plot_intermediate_values = log_plot_intermediate_values
         self._log_plot_optimization_history = log_plot_optimization_history
+        self._target_names = target_names
+        self._namespaces = None
 
         run[INTEGRATION_VERSION_KEY] = __version__
 
@@ -208,7 +208,6 @@ class NeptuneCallback:
             _log_plots(
                 self.run,
                 study,
-                namespaces=self._namespaces,
                 visualization_backend=self._visualization_backend,
                 log_plot_contour=self._log_plot_contour,
                 log_plot_edf=self._log_plot_edf,
@@ -218,6 +217,7 @@ class NeptuneCallback:
                 log_plot_slice=self._log_plot_slice,
                 log_plot_optimization_history=self._log_plot_optimization_history,
                 log_plot_intermediate_values=self._log_plot_intermediate_values,
+                namespaces=self._namespaces,
             )
 
     def _log_study(self, study, trial):
@@ -298,7 +298,6 @@ def log_study_metadata(
     study: optuna.Study,
     run: neptune.Run,
     base_namespace="",
-    target_names: Optional[List[str]] = None,
     log_plots=True,
     log_study=True,
     log_all_trials=True,
@@ -312,6 +311,7 @@ def log_study_metadata(
     log_plot_slice=True,
     log_plot_intermediate_values=True,
     log_plot_optimization_history=True,
+    target_names: Optional[List[str]] = None,
 ):
     """Logs the metadata from the Optuna study to Neptune.
 
@@ -327,7 +327,6 @@ def log_study_metadata(
         study: Optuna study object.
         run: Neptune run.
         base_namespace: Namespace inside the run where your study metadata is logged.
-        target_names: List of objective names if optuna.study is multi-objective.
         log_plots: If True, the visualizations from optuna.visualizations will be logged to Neptune.
         log_study: If True, the study will be logged to Neptune. The objects that are logged depend
             on the study storage type used: If 'InMemoryStorage' is used, the pickled study
@@ -354,6 +353,7 @@ def log_study_metadata(
             If your optuna.study is not using pruners, this plot is not logged.
         log_plot_optimization_history: If True, the optuna.visualizations.plot_optimization_history
             visualization will be logged to Neptune.
+        target_names: List of objective names if optuna.study is multi-objective.
 
     Examples:
         Create a run:
@@ -403,7 +403,6 @@ def log_study_metadata(
         _log_plots(
             run,
             study,
-            namespaces=namespaces,
             visualization_backend=visualization_backend,
             log_plot_contour=log_plot_contour,
             log_plot_edf=log_plot_edf,
@@ -413,6 +412,7 @@ def log_study_metadata(
             log_plot_slice=log_plot_slice,
             log_plot_optimization_history=log_plot_optimization_history,
             log_plot_intermediate_values=log_plot_intermediate_values,
+            namespaces=namespaces,
         )
 
     if log_study:
@@ -499,7 +499,6 @@ def _log_study(run, study: optuna.Study):
 def _log_plots(
     run,
     study: optuna.Study,
-    namespaces,
     visualization_backend="plotly",
     log_plot_contour=True,
     log_plot_edf=True,
@@ -509,6 +508,7 @@ def _log_plots(
     log_plot_slice=True,
     log_plot_intermediate_values=True,
     log_plot_optimization_history=True,
+    namespaces: Optional[List[str]]=None,
 ):
     if visualization_backend == "matplotlib":
         import optuna.visualization.matplotlib as vis
