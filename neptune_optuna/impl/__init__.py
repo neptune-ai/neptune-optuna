@@ -425,7 +425,7 @@ def load_study_from_run(run: neptune.Run):
     Loading mechanics depend on the study storage type used during the run:
     - If the study used 'InMemoryStorage', it will be loaded from the logged pickled study object.
     - If the study used database storage, it will be loaded from the logged database URL.
-    
+
     To resume an existing run, you need the run ID. It is stored in the run's "sys/id" field.
 
     Args:
@@ -508,7 +508,7 @@ def _log_plots(
     log_plot_slice=True,
     log_plot_intermediate_values=True,
     log_plot_optimization_history=True,
-    namespaces: Optional[List[str]]=None,
+    namespaces: Optional[List[str]] = None,
 ):
     if visualization_backend == "matplotlib":
         import optuna.visualization.matplotlib as vis
@@ -607,6 +607,8 @@ def _log_single_trial(
 ):
     handle = run["best"] if best else run["trials"]
 
+    handle["params"].log(trial.params)
+
     handle[f"trials/{trial._trial_id}/datetime_start"] = trial.datetime_start
     handle[f"trials/{trial._trial_id}/datetime_complete"] = trial.datetime_complete
     handle[f"trials/{trial._trial_id}/duration"] = trial.duration
@@ -615,15 +617,23 @@ def _log_single_trial(
     handle[f"trials/{trial._trial_id}/params"] = trial.params
 
     if study._is_multi_objective():
+
+        if len(study.best_trials) > 1 or len(study.trials) > 1:
+            for k, v in enumerate(trial.values):
+                handle[f"{namespaces[k]}"].log(v, step=trial._trial_id)
+        else:
+            for k, v in enumerate(trial.values):
+                handle[f"{namespaces[k]}"] = v
+
         handle[f"trials/{trial._trial_id}/values"] = {
             f"{namespaces[k]}": v for k, v in enumerate(trial.values)
         }
-
     else:
+        if len(study.best_trials) > 1 or len(study.trials) > 1:
+            handle[namespaces].log(trial.value, step=trial._trial_id)
+        else:
+            handle[namespaces] = trial.value
         handle[f"trials/{trial._trial_id}/value"] = trial.value
-        handle["values"].log(trial.value, step=trial._trial_id)
-        handle["params"].log(trial.params)
-        handle["values|params"].log(f"value: {trial.value}| params: {trial.params}")
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
         handle[f"trials/{trial._trial_id}/state"] = repr(trial.state)
