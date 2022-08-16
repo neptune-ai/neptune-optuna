@@ -607,8 +607,6 @@ def _log_single_trial(
 ):
     handle = run["best"] if best else run["trials"]
 
-    handle["params"].log(trial.params)
-
     handle[f"trials/{trial._trial_id}/datetime_start"] = trial.datetime_start
     handle[f"trials/{trial._trial_id}/datetime_complete"] = trial.datetime_complete
     handle[f"trials/{trial._trial_id}/duration"] = trial.duration
@@ -617,6 +615,7 @@ def _log_single_trial(
     handle[f"trials/{trial._trial_id}/params"] = trial.params
 
     if study._is_multi_objective():
+        handle["params"].log(trial.params)
         handle[f"trials/{trial._trial_id}/values"] = {
             f"{namespaces[k]}": v for k, v in enumerate(trial.values)
         }
@@ -626,8 +625,12 @@ def _log_single_trial(
         handle[f"trials/{trial._trial_id}/value"] = trial.value
         if best:
             handle["value"] = trial.value
+            handle["params"] = trial.params
+            handle["value|params"] = f"value: {trial.value}| params: {trial.params}"
         else:
             handle["values"].log(trial.value, step=trial._trial_id)
+            handle["params"].log(trial.params)
+            handle["values|params"].log(f"value: {trial.value}| params: {trial.params}")
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
         handle[f"trials/{trial._trial_id}/state"] = repr(trial.state)
