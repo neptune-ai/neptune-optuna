@@ -623,8 +623,11 @@ def _log_single_trial(
         for k, v in enumerate(trial.values):
             handle[f"values/{namespaces[k]}"].log(v, step=trial._trial_id)
     else:
-        handle["value"].log(trial.value, step=trial._trial_id)
         handle[f"trials/{trial._trial_id}/value"] = trial.value
+        if best:
+            handle["value"] = trial.value
+        else:
+            handle["values"].log(trial.value, step=trial._trial_id)
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
         handle[f"trials/{trial._trial_id}/state"] = repr(trial.state)
