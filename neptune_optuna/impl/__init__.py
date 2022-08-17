@@ -82,7 +82,7 @@ class NeptuneCallback:
             If your optuna.study is not using pruners, this plot is not logged.
         log_plot_optimization_history: If True, the optuna.visualizations.plot_optimization_history
             visualization will be logged to Neptune.
-        target_names: Names of the study objectives to log (such as "Accuracy").
+        target_names: List of one or more study objective names to log (see example).
 
     Examples:
         Create a run:
@@ -353,7 +353,7 @@ def log_study_metadata(
             If your optuna.study is not using pruners, this plot is not logged.
         log_plot_optimization_history: If True, the optuna.visualizations.plot_optimization_history
             visualization will be logged to Neptune.
-        target_names: List of objective names if optuna.study is multi-objective.
+        target_names: List of one or more study objective names to log (see example).
 
     Examples:
         Create a run:
