@@ -197,7 +197,7 @@ class NeptuneCallback:
         self.run["study/distributions"].log(trial.distributions)
 
     def _log_best_trials(self, study):
-        _log_best_trials(self.run, study, self._namespaces)
+        _log_best_trials(self.run, study, namespaces=self._namespaces)
 
     def _log_study_details(self, study, trial):
         if trial._trial_id == 0:
@@ -390,7 +390,7 @@ def log_study_metadata(
 
     namespaces = _get_namespaces(study, target_names)
 
-    _log_best_trials(run, study, namespaces)
+    _log_best_trials(run, study, namespaces=namespaces)
     _log_study_details(run, study)
 
     if log_all_trials:
