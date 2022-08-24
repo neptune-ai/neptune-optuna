@@ -245,7 +245,7 @@ class NeptuneCallback:
 
 
 def _log_best_trials(run, study: optuna.Study, namespaces):
-    if study._is_multi_objective():
+    if _is_multi_objective(study=study):
         _log_trials(
             run,
             study,
@@ -263,11 +263,15 @@ def _log_best_trials(run, study: optuna.Study, namespaces):
         )
 
 
+def _is_multi_objective(study: optuna.Study) -> bool:
+    return len(study.directions) > 1
+
+
 def _get_namespaces(
     study: optuna.Study, target_names: Optional[List[str]] = None
 ) -> Union[List[str], str]:
 
-    if study._is_multi_objective():
+    if _is_multi_objective(study=study):
         if target_names is None:
             return [f"objective_{index}" for index in range(len(study.directions))]
 
@@ -459,7 +463,7 @@ def load_study_from_run(run: neptune.Run):
 def _log_study_details(run, study: optuna.Study):
     run["study/study_name"] = study.study_name
 
-    if study._is_multi_objective():
+    if _is_multi_objective(study=study):
         run["study/directions"] = study.directions
     else:
         run["study/direction"] = study.direction
@@ -594,7 +598,7 @@ def _log_plots(
     if (
         vis.is_available
         and log_plot_pareto_front
-        and study._is_multi_objective()
+        and _is_multi_objective(study=study)
         and visualization_backend == "plotly"
     ):
         handle["plot_pareto_front"] = neptune.types.File.as_html(
@@ -614,7 +618,7 @@ def _log_single_trial(
     handle[f"trials/{trial._trial_id}/intermediate_values"] = trial.intermediate_values
     handle[f"trials/{trial._trial_id}/params"] = trial.params
 
-    if study._is_multi_objective():
+    if _is_multi_objective(study=study):
         handle[f"trials/{trial._trial_id}/values"] = {
             f"{namespaces[k]}": v for k, v in enumerate(trial.values)
         }
