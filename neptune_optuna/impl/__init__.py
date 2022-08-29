@@ -43,7 +43,7 @@ INTEGRATION_VERSION_KEY = "source_code/integrations/neptune-optuna"
 
 
 class NeptuneCallback:
-    """A callback that logs metadata from an Optuna study to Neptune.
+    """A callback that logs metadata from an Optuna Study to Neptune.
 
     With this callback, you can log and display:
 
@@ -85,7 +85,7 @@ class NeptuneCallback:
         target_names: List of one or more study objective names to log (see example).
 
     Examples:
-        Create a run:
+        Create a Run:
         >>> import neptune.new as neptune
         ... run = neptune.init_run()
 
@@ -106,7 +106,7 @@ class NeptuneCallback:
         ... )
 
         Log single and multi-objective study metadata to Neptune
-        by passing the callback to the Optuna study:
+        by passing the callback to the Optuna Study:
         >>> study = optuna.create_study(direction="maximize")
         ... study.optimize(objective, n_trials=5, callbacks=[neptune_callback])
 
@@ -185,10 +185,10 @@ class NeptuneCallback:
             self._namespaces = _get_namespaces(study, self._target_names)
         self._log_trial(study, trial)
         self._log_trial_distributions(trial)
+        self._log_best_trials(study)
         self._log_study_details(study, trial)
         self._log_plots(study, trial)
         self._log_study(study, trial)
-        self._log_best_trials(study)
 
     def _log_trial(self, study, trial):
         _log_single_trial(self.run, study, trial=trial, namespaces=self._namespaces)
