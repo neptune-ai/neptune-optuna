@@ -1,7 +1,7 @@
 ## neptune-optuna 0.9.15
 
 ### Changes
-- Changed integrations utils to be imported from non-internal package ([#12](https://github.com/neptune-ai/neptune-optuna/pull/12))
+- Changed integrations utils to be imported from non-internal package ([#17](https://github.com/neptune-ai/neptune-optuna/pull/17))
 
 ## neptune-optuna 0.9.14
 
