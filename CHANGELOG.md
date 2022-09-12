@@ -1,4 +1,4 @@
-## [UNRELEASED] neptune-optuna 0.9.16
+## [UNRELEASED] neptune-optuna 0.10.0
 
 ### Features
 - Add support for multi-objective training ([#14](https://github.com/neptune-ai/neptune-optuna/pull/14))
