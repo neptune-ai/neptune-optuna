@@ -261,9 +261,7 @@ def _is_multi_objective(study: optuna.Study) -> bool:
     return len(study.directions) > 1
 
 
-def _get_namespaces(
-    study: optuna.Study, target_names: Optional[List[str]] = None
-) -> Union[List[str], str]:
+def _get_namespaces(study: optuna.Study, target_names: Optional[List[str]] = None) -> Union[List[str], str]:
 
     if _is_multi_objective(study=study):
         if target_names is None:
@@ -482,9 +480,7 @@ def _log_study(run, study: optuna.Study):
                 run["study/storage_type"] = "RedisStorage"
                 run["study/storage_url"] = study._storage._url
             elif isinstance(study._storage, optuna.storages._CachedStorage):
-                run[
-                    "study/storage_type"
-                ] = "RDBStorage"  # apparently CachedStorage typically wraps RDBStorage
+                run["study/storage_type"] = "RDBStorage"  # apparently CachedStorage typically wraps RDBStorage
                 run["study/storage_url"] = study._storage._backend.url
             elif isinstance(study._storage, optuna.storages.RDBStorage):
                 run["study/storage_type"] = "RDBStorage"
@@ -513,9 +509,7 @@ def _log_plots(
     elif visualization_backend == "plotly":
         import optuna.visualization as vis
     else:
-        raise NotImplementedError(
-            f"{visualization_backend} visualisation backend is not implemented"
-        )
+        raise NotImplementedError(f"{visualization_backend} visualisation backend is not implemented")
 
     handle = run["visualizations"]
 
@@ -568,9 +562,7 @@ def _log_plots(
                     vis.plot_slice(study, target=target, target_name=target_name)
                 )
 
-            if log_plot_intermediate_values and any(
-                trial.intermediate_values for trial in study.trials
-            ):
+            if log_plot_intermediate_values and any(trial.intermediate_values for trial in study.trials):
                 # Intermediate values plot if available only if the above condition is met
                 temp_handle["plot_intermediate_values"] = neptune.types.File.as_html(
                     vis.plot_intermediate_values(study, target=target, target_name=target_name)
@@ -587,14 +579,10 @@ def _log_plots(
         and _is_multi_objective(study=study)
         and visualization_backend == "plotly"
     ):
-        handle["plot_pareto_front"] = neptune.types.File.as_html(
-            vis.plot_pareto_front(study, target_names=namespaces)
-        )
+        handle["plot_pareto_front"] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=namespaces))
 
 
-def _log_single_trial(
-    run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False
-):
+def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False):
     handle = run["best"] if best else run["trials"]
 
     handle[f"trials/{trial._trial_id}/datetime_start"] = trial.datetime_start
@@ -605,9 +593,7 @@ def _log_single_trial(
     handle[f"trials/{trial._trial_id}/params"] = trial.params
 
     if _is_multi_objective(study=study):
-        handle[f"trials/{trial._trial_id}/values"] = {
-            f"{namespaces[k]}": v for k, v in enumerate(trial.values)
-        }
+        handle[f"trials/{trial._trial_id}/values"] = {f"{namespaces[k]}": v for k, v in enumerate(trial.values)}
         if best:
             handle["params"] = trial.params
             for k, v in enumerate(trial.values):
