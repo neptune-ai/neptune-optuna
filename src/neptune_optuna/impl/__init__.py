@@ -29,13 +29,13 @@ from neptune_optuna import __version__
 try:
     # neptune-client=0.9.0+ package structure
     import neptune.new as neptune
+    from neptune.new.integrations.utils import expect_not_an_experiment, verify_type
     from neptune.new.types import File
-    from neptune.new.integrations.utils import verify_type, expect_not_an_experiment
 except ImportError:
     # neptune-client>=1.0.0 package structure
     import neptune
+    from neptune.integrations.utils import expect_not_an_experiment, verify_type
     from neptune.types import File
-    from neptune.integrations.utils import verify_type, expect_not_an_experiment
 
 INTEGRATION_VERSION_KEY = "source_code/integrations/neptune-optuna"
 
@@ -144,9 +144,7 @@ class NeptuneCallback:
             log_plot_parallel_coordinate,
             (bool, type(None)),
         )
-        verify_type(
-            "log_plot_param_importances", log_plot_param_importances, (bool, type(None))
-        )
+        verify_type("log_plot_param_importances", log_plot_param_importances, (bool, type(None)))
         verify_type("log_plot_pareto_front", log_plot_pareto_front, (bool, type(None)))
         verify_type("log_plot_slice", log_plot_slice, (bool, type(None)))
         verify_type(
@@ -222,9 +220,7 @@ class NeptuneCallback:
         if self._should_log_study(trial):
             _log_study(self.run, study)
 
-    def _should_log_plots(
-        self, study: optuna.study.Study, trial: optuna.trial.FrozenTrial
-    ):
+    def _should_log_plots(self, study: optuna.study.Study, trial: optuna.trial.FrozenTrial):
         if not len(study.get_trials(states=(optuna.trial.TrialState.COMPLETE,))):
             return False
         elif self._plots_update_freq == "never":
@@ -548,9 +544,7 @@ def _log_plots(
 
             if log_plot_parallel_coordinate:
                 temp_handle["plot_parallel_coordinate"] = neptune.types.File.as_html(
-                    vis.plot_parallel_coordinate(
-                        study, target=target, target_name=target_name
-                    )
+                    vis.plot_parallel_coordinate(study, target=target, target_name=target_name)
                 )
 
             if (
@@ -567,9 +561,7 @@ def _log_plots(
             ):
                 with contextlib.suppress(RuntimeError, ValueError, ZeroDivisionError):
                     temp_handle["plot_param_importances"] = neptune.types.File.as_html(
-                        vis.plot_param_importances(
-                            study, target=target, target_name=target_name
-                        )
+                        vis.plot_param_importances(study, target=target, target_name=target_name)
                     )
             if log_plot_slice and any(params):
                 temp_handle["plot_slice"] = neptune.types.File.as_html(
@@ -581,16 +573,12 @@ def _log_plots(
             ):
                 # Intermediate values plot if available only if the above condition is met
                 temp_handle["plot_intermediate_values"] = neptune.types.File.as_html(
-                    vis.plot_intermediate_values(
-                        study, target=target, target_name=target_name
-                    )
+                    vis.plot_intermediate_values(study, target=target, target_name=target_name)
                 )
 
             if log_plot_optimization_history:
                 temp_handle["plot_optimization_history"] = neptune.types.File.as_html(
-                    vis.plot_optimization_history(
-                        study, target=target, target_name=target_name
-                    )
+                    vis.plot_optimization_history(study, target=target, target_name=target_name)
                 )
 
     if (
@@ -659,8 +647,8 @@ def _log_trials(
 
 def _get_pickle(run: neptune.Run, path: str):
     import os
-    import tempfile
     import pickle
+    import tempfile
 
     with tempfile.TemporaryDirectory() as d:
         run[path].download(destination=d)
