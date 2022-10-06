@@ -1,10 +1,10 @@
 # Neptune + Optuna Integration
 
-Neptune is a tool for experiment tracking, model registry, data versioning, and monitoring model training live. 
+Neptune is a tool for experiment tracking, model registry, data versioning, and monitoring model training live.
 
 This integration lets you use it as an Optuna visualization dashboard to log and monitor hyperparameter sweep live.
 
-## What will you get with this integration? 
+## What will you get with this integration?
 
 * log and monitor the Optuna hyperparameter sweep live:
 ** values and params for each Trial
