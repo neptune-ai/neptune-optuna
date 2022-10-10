@@ -17,6 +17,7 @@ __all__ = [
     "NeptuneCallback",
     "log_study_metadata",
     "load_study_from_run",
+    "__version__",
 ]
 
 import contextlib
@@ -28,8 +29,6 @@ from typing import (
 )
 
 import optuna
-
-from neptune_optuna import __version__
 
 try:
     # neptune-client=0.9.0+ package structure
@@ -47,6 +46,10 @@ except ImportError:
         verify_type,
     )
     from neptune.types import File
+
+from neptune_optuna._version import get_versions
+
+__version__ = get_versions()["version"]
 
 INTEGRATION_VERSION_KEY = "source_code/integrations/neptune-optuna"
 
