@@ -6,6 +6,9 @@
 ### Features
 - Add support for multi-objective training ([#14](https://github.com/neptune-ai/neptune-optuna/pull/14))
 
+### Fixes
+- Fixed NeptuneCallback import error - now possible to directly import with `from neptune_optuna import NeptuneCallback` ([#21](https://github.com/neptune-ai/neptune-optuna/pull/21))
+
 ## neptune-optuna 0.9.15
 
 ### Changes
