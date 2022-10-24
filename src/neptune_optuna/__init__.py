@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+__all__ = [
+    "NeptuneCallback",
+    "__version__",
+    "load_study_from_run",
+    "log_study_metadata",
+]
 
 from neptune_optuna.impl import (
     NeptuneCallback,

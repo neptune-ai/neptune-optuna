@@ -529,7 +529,7 @@ def _log_plots(
 
     for i in range(len(study.directions)):
         if isinstance(namespaces, list):
-            target = lambda t: t.values[i]
+            target = lambda t: t.values[i]  # noqa: E731
             target_name = namespaces[i]
             temp_handle = handle[namespaces[i]]
         else:
