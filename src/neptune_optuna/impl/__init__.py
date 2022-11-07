@@ -47,9 +47,7 @@ except ImportError:
     )
     from neptune.types import File
 
-from neptune_optuna._version import get_versions
-
-__version__ = get_versions()["version"]
+from neptune_optuna.impl.version import __version__
 
 INTEGRATION_VERSION_KEY = "source_code/integrations/neptune-optuna"
 

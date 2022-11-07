@@ -1,2 +1,0 @@
-include versioneer.py
-include neptune_optuna/_version.py
