@@ -2,7 +2,7 @@
 
 ### Changes
 - Move `neptune_optuna` package to `src` directory ([#18](https://github.com/neptune-ai/neptune-optuna/pull/18))
-- Poetry as a package builder ([#20](https://github.com/neptune-ai/neptune-optuna/pull/20))
+- Poetry as a package builder ([#24](https://github.com/neptune-ai/neptune-optuna/pull/24))
 
 ### Features
 - Add support for multi-objective training ([#14](https://github.com/neptune-ai/neptune-optuna/pull/14))
