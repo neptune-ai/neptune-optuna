@@ -71,7 +71,6 @@ packages = [
 
 [tool.poetry.urls]
 "Tracker" = "https://github.com/neptune-ai/neptune-optuna/issues"
-"Source" = "https://github.com/neptune-ai/neptune-optuna"
 "Documentation" = "https://docs.neptune.ai/integrations-and-supported-tools/model-training/optuna"
 
 [tool.black]
