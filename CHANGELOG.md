@@ -1,3 +1,8 @@
+## neptune-optuna 0.10.1
+
+### Fixes
+- Fixed scikit-learn requirement package name ([#26](https://github.com/neptune-ai/neptune-optuna/pull/26))
+
 ## neptune-optuna 0.10.0
 
 ### Changes
