@@ -18,7 +18,7 @@ importlib-metadata = { version = "*", python = "<3.8" }
 neptune-client = ">=0.16.7"
 optuna = ">=2.4.0"
 plotly = "*"
-sklearn = "*"
+scikit-learn = "*"
 
 # dev
 pre-commit = { version = "*", optional = true }
