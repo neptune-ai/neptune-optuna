@@ -574,12 +574,6 @@ def _log_plots(
                     vis.plot_slice(study, target=target, target_name=target_name)
                 )
 
-            if log_plot_intermediate_values and any(trial.intermediate_values for trial in study.trials):
-                # Intermediate values plot if available only if the above condition is met
-                temp_handle["plot_intermediate_values"] = neptune.types.File.as_html(
-                    vis.plot_intermediate_values(study, target=target, target_name=target_name)
-                )
-
             if log_plot_optimization_history:
                 temp_handle["plot_optimization_history"] = neptune.types.File.as_html(
                     vis.plot_optimization_history(study, target=target, target_name=target_name)
@@ -592,6 +586,16 @@ def _log_plots(
         and visualization_backend == "plotly"
     ):
         handle["plot_pareto_front"] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=namespaces))
+
+    if (
+        vis.is_available
+        and log_plot_intermediate_values
+        and any(trial.intermediate_values for trial in study.trials)
+    ):
+        # Intermediate values plot if available only if the above condition is met
+        handle["plot_intermediate_values"] = neptune.types.File.as_html(
+            vis.plot_intermediate_values(study)
+        )
 
 
 def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False):
