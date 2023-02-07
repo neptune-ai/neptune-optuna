@@ -574,10 +574,14 @@ def _log_plots(
                     vis.plot_slice(study, target=target, target_name=target_name)
                 )
 
-            if log_plot_intermediate_values and any(trial.intermediate_values for trial in study.trials):
+            if (
+                not _is_multi_objective(study=study)
+                and log_plot_intermediate_values
+                and any(trial.intermediate_values for trial in study.trials)
+            ):
                 # Intermediate values plot if available only if the above condition is met
                 temp_handle["plot_intermediate_values"] = neptune.types.File.as_html(
-                    vis.plot_intermediate_values(study, target=target, target_name=target_name)
+                    vis.plot_intermediate_values(study)
                 )
 
             if log_plot_optimization_history:

@@ -1,3 +1,8 @@
+## [UNRELEASED] neptune-optuna 0.10.2
+
+### Fixes
+- Fixed plot_intermeadiate_values() got unexpected keyword argument error ([#28](https://github.com/neptune-ai/neptune-optuna/pull/28))
+
 ## neptune-optuna 0.10.1
 
 ### Fixes
