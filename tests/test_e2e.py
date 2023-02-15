@@ -64,4 +64,4 @@ def validate_run(run, n_trials, study, handler_namespace, base_namespace):
 
     assert run[f"{prefix}best/params"].fetch() == study.best_params
 
-    assert run.exists("source_code/integrations/neptune-optuna")
+    assert run["source_code/integrations/neptune-optuna"].fetch() == npt_utils.__version__
