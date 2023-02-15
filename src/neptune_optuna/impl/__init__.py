@@ -206,7 +206,7 @@ class NeptuneCallback:
         _log_single_trial(self.run, study, trial=trial, namespaces=self._namespaces)
 
     def _log_trial_distributions(self, trial):
-        self.run["study/distributions"].log(trial.distributions)
+        self.run["study/distributions"].append(trial.distributions)
 
     def _log_best_trials(self, study):
         _log_best_trials(self.run, study, namespaces=self._namespaces)
@@ -409,7 +409,7 @@ def log_study_metadata(
         _log_trials(run, study, study.trials, namespaces=namespaces)
 
     if log_distributions:
-        run["study/distributions"].log([trial.distributions for trial in study.trials])
+        run["study/distributions"].append([trial.distributions for trial in study.trials])
 
     if log_plots:
         _log_plots(
@@ -619,9 +619,9 @@ def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial,
             for k, v in enumerate(trial.values):
                 handle[f"values/{namespaces[k]}"] = v
         else:
-            handle["params"].log(trial.params)
+            handle["params"].append(trial.params)
             for k, v in enumerate(trial.values):
-                handle[f"values/{namespaces[k]}"].log(v, step=trial._trial_id)
+                handle[f"values/{namespaces[k]}"].append(v, step=trial._trial_id)
 
     else:
         handle[f"trials/{trial._trial_id}/value"] = trial.value
@@ -630,9 +630,9 @@ def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial,
             handle["params"] = trial.params
             handle["value|params"] = f"value: {trial.value}| params: {trial.params}"
         else:
-            handle["values"].log(trial.value, step=trial._trial_id)
-            handle["params"].log(trial.params)
-            handle["values|params"].log(f"value: {trial.value}| params: {trial.params}")
+            handle["values"].append(trial.value, step=trial._trial_id)
+            handle["params"].append(trial.params)
+            handle["values|params"].append(f"value: {trial.value}| params: {trial.params}")
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
         handle[f"trials/{trial._trial_id}/state"] = repr(trial.state)
