@@ -1,3 +1,7 @@
+## neptune-optuna 0.11.0
+
+We updated the integration to use the most recent version of the Neptune client.
+
 ## neptune-optuna 0.10.2
 
 ### Fixes
