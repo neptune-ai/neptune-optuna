@@ -449,7 +449,7 @@ def load_study_from_run(run: neptune.Run):
     Examples:
         Initialize an existing run by passing the run ID:
         >>> import neptune.new as neptune
-        ... run = neptune.init_run(run="PRO-123")
+        ... run = neptune.init_run(with_id="PRO-123")
 
         Load study from the run and continue optimization:
         >>> import neptune_optuna.impl as optuna_utils
