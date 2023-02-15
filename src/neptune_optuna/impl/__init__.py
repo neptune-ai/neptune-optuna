@@ -129,7 +129,7 @@ class NeptuneCallback:
 
     def __init__(
         self,
-        run: neptune.Run,
+        run: Union[neptune.Run, neptune.handler.Handler],
         base_namespace: Optional[str] = None,
         plots_update_freq: Union[int, str] = 1,
         study_update_freq: Union[int, str] = 1,
