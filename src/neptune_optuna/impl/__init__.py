@@ -38,6 +38,7 @@ try:
         verify_type,
     )
     from neptune.new.types import File
+    from neptune.new.utils import stringify_unsupported
 except ImportError:
     # neptune-client>=1.0.0 package structure
     import neptune
@@ -46,6 +47,7 @@ except ImportError:
         verify_type,
     )
     from neptune.types import File
+    from neptune.utils import stringify_unsupported
 
 from neptune_optuna.impl.version import __version__
 
@@ -210,7 +212,7 @@ class NeptuneCallback:
         _log_single_trial(self.run, study, trial=trial, namespaces=self._namespaces)
 
     def _log_trial_distributions(self, trial):
-        self.run["study/distributions"].append(trial.distributions)
+        self.run["study/distributions"].append(stringify_unsupported(trial.distributions))
 
     def _log_best_trials(self, study):
         _log_best_trials(self.run, study, namespaces=self._namespaces)
@@ -413,7 +415,7 @@ def log_study_metadata(
         _log_trials(run, study, study.trials, namespaces=namespaces)
 
     if log_distributions:
-        run["study/distributions"].append([trial.distributions for trial in study.trials])
+        run["study/distributions"].append([stringify_unsupported(trial.distributions) for trial in study.trials])
 
     if log_plots:
         _log_plots(
@@ -484,7 +486,7 @@ def _log_study_details(run, study: optuna.Study):
     run["study/user_attrs"] = study.user_attrs
     with contextlib.suppress(AttributeError):
         run["study/_study_id"] = study._study_id
-        run["study/_storage"] = study._storage
+        run["study/_storage"] = stringify_unsupported(study._storage)
 
 
 def _log_study(run, study: optuna.Study):
@@ -611,31 +613,32 @@ def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial,
 
     handle[f"trials/{trial._trial_id}/datetime_start"] = trial.datetime_start
     handle[f"trials/{trial._trial_id}/datetime_complete"] = trial.datetime_complete
-    handle[f"trials/{trial._trial_id}/duration"] = trial.duration
-    handle[f"trials/{trial._trial_id}/distributions"] = trial.distributions
-    handle[f"trials/{trial._trial_id}/intermediate_values"] = trial.intermediate_values
-    handle[f"trials/{trial._trial_id}/params"] = trial.params
+    handle[f"trials/{trial._trial_id}/duration"] = stringify_unsupported(trial.duration)
+    handle[f"trials/{trial._trial_id}/distributions"] = stringify_unsupported(trial.distributions)
+    handle[f"trials/{trial._trial_id}/intermediate_values"] = stringify_unsupported(trial.intermediate_values)
+    handle[f"trials/{trial._trial_id}/params"] = stringify_unsupported(trial.params)
 
     if _is_multi_objective(study=study):
-        handle[f"trials/{trial._trial_id}/values"] = {f"{namespaces[k]}": v for k, v in enumerate(trial.values)}
+        for k, v in enumerate(trial.values):
+            handle[f"trials/{trial._trial_id}/values/{namespaces[k]}"] = stringify_unsupported(v)
         if best:
-            handle["params"] = trial.params
+            handle["params"] = stringify_unsupported(trial.params)
             for k, v in enumerate(trial.values):
-                handle[f"values/{namespaces[k]}"] = v
+                handle[f"values/{namespaces[k]}"] = stringify_unsupported(v)
         else:
-            handle["params"].append(trial.params)
+            handle["params"].append(stringify_unsupported(trial.params))
             for k, v in enumerate(trial.values):
-                handle[f"values/{namespaces[k]}"].append(v, step=trial._trial_id)
+                handle[f"values/{namespaces[k]}"].append(stringify_unsupported(v), step=trial._trial_id)
 
     else:
-        handle[f"trials/{trial._trial_id}/value"] = trial.value
+        handle[f"trials/{trial._trial_id}/value"] = stringify_unsupported(trial.value)
         if best:
-            handle["value"] = trial.value
-            handle["params"] = trial.params
+            handle["value"] = stringify_unsupported(trial.value)
+            handle["params"] = stringify_unsupported(trial.params)
             handle["value|params"] = f"value: {trial.value}| params: {trial.params}"
         else:
-            handle["values"].append(trial.value, step=trial._trial_id)
-            handle["params"].append(trial.params)
+            handle["values"].append(stringify_unsupported(trial.value), step=trial._trial_id)
+            handle["params"].append(stringify_unsupported(trial.params))
             handle["values|params"].append(f"value: {trial.value}| params: {trial.params}")
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:

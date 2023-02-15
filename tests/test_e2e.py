@@ -1,5 +1,6 @@
-import optuna
 import pytest
+
+import optuna
 
 try:
     # neptune-client=0.9.0+ package structure
@@ -27,7 +28,7 @@ def test_e2e(handler_namespace, base_namespace):
     neptune_callback = npt_utils.NeptuneCallback(handler, base_namespace=base_namespace)
 
     def objective(trial):
-        x = trial.suggest_float('x', -10, 10)
+        x = trial.suggest_float("x", -10, 10)
         return (x - 2) ** 2
 
     study = optuna.create_study()
