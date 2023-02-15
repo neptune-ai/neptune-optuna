@@ -36,7 +36,7 @@ def test_e2e():
 
     assert len(run_structure["trials"]["trials"]) == n_trials
     assert len(run["trials/values"].fetch_values()) == n_trials
-    assert len(run["trials/params"].fetch_values()) == n_trials
+    assert len(run["trials/params/x"].fetch_values()) == n_trials
 
     assert run["best/params"].fetch() == study.best_params
 
