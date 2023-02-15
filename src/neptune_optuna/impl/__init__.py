@@ -130,7 +130,7 @@ class NeptuneCallback:
     def __init__(
         self,
         run: Union[neptune.Run, neptune.handler.Handler],
-        base_namespace: Optional[str] = None,
+        base_namespace: str = "",
         plots_update_freq: Union[int, str] = 1,
         study_update_freq: Union[int, str] = 1,
         visualization_backend: str = "plotly",
@@ -147,7 +147,7 @@ class NeptuneCallback:
 
         expect_not_an_experiment(run)
         verify_type("run", run, (neptune.Run, neptune.handler.Handler))
-        verify_type("base_namespace", base_namespace, (str, type(None)))
+        verify_type("base_namespace", base_namespace, str)
         verify_type("log_plots_freq", plots_update_freq, (int, str, type(None)))
         verify_type("log_study_freq", study_update_freq, (int, str, type(None)))
         verify_type("visualization_backend", visualization_backend, (str, type(None)))
@@ -173,7 +173,7 @@ class NeptuneCallback:
         )
         verify_type("target_names", target_names, (list, type(None)))
 
-        if base_namespace is not None:
+        if base_namespace != "":
             self.run = run[base_namespace]
         else:
             self.run = run

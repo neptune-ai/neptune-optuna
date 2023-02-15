@@ -13,7 +13,7 @@ import neptune_optuna.impl as npt_utils
 
 
 @pytest.mark.parametrize("handler_namespace", [None, "handler_namespace"])
-@pytest.mark.parametrize("base_namespace", [None, "base_namespace"])
+@pytest.mark.parametrize("base_namespace", ["", "base_namespace"])
 def test_e2e(handler_namespace, base_namespace):
 
     n_trials = 5
@@ -42,7 +42,7 @@ def validate_run(run, n_trials, study, handler_namespace, base_namespace):
     prefix = ""
     if handler_namespace is not None:
         prefix = f"{handler_namespace}/"
-    if base_namespace is not None:
+    if base_namespace != "":
         prefix = f"{prefix}{base_namespace}/"
 
     run.wait()
@@ -55,7 +55,7 @@ def validate_run(run, n_trials, study, handler_namespace, base_namespace):
     run_structure = run.get_structure()
     if handler_namespace is not None:
         run_structure = run_structure[handler_namespace]
-    if base_namespace is not None:
+    if base_namespace != "":
         run_structure = run_structure[base_namespace]
     assert len(run_structure["trials"]["trials"]) == n_trials
 
