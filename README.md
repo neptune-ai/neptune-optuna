@@ -36,15 +36,15 @@ pip install neptune-client[optuna] optuna
 ```python
 # In Python:
 import neptune.new as neptune
-import neptune.new.integrations.optuna as optuna_utils
+import neptune.new.integrations.optuna as npt_utils
 
 # Start a run
-run = neptune.init(api_token="ANONYMOUS",
+run = neptune.init(api_token=neptune.ANONYMOUS_API_TOKEN,
                    project="common/optuna-integration")
 
 
 # Create a NeptuneCallback instance
-neptune_callback = optuna_utils.NeptuneCallback(run)
+neptune_callback = npt_utils.NeptuneCallback(run)
 
 
 # Pass the callback to study.optimize()
