@@ -186,7 +186,11 @@ class NeptuneCallback:
         self._target_names = target_names
         self._namespaces = None
 
-        run[INTEGRATION_VERSION_KEY] = __version__
+        root_obj = self.run
+        if isinstance(self.run, neptune.handler.Handler):
+            root_obj = self.run.get_root_object()
+
+        root_obj[INTEGRATION_VERSION_KEY] = __version__
 
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial):
         if self._namespaces is None:

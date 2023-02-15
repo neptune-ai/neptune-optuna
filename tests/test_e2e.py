@@ -12,7 +12,7 @@ import neptune_optuna.impl as npt_utils
 def test_e2e():
 
     n_trials = 5
-    base_namespace = "optuna"
+    # base_namespace = "optuna"
 
     run = neptune.init_run()
     # handler = run[base_namespace]
@@ -39,3 +39,5 @@ def test_e2e():
     assert len(run["trials/params"].fetch_values()) == n_trials
 
     assert run["best/params"].fetch() == study.best_params
+
+    assert run.exists("source_code/integrations/neptune-optuna")
