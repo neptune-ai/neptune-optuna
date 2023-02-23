@@ -216,7 +216,7 @@ class NeptuneCallback:
         _log_single_trial(self.run, study, trial=trial, namespaces=self._namespaces)
 
     def _log_trial_distributions(self, trial):
-        self.run["study/distributions"].append(stringify_unsupported(trial.distributions))
+        self.run["study/distributions"] = stringify_unsupported(trial.distributions)
 
     def _log_best_trials(self, study):
         _log_best_trials(self.run, study, namespaces=self._namespaces)
