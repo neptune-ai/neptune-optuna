@@ -1,12 +1,18 @@
+import warnings
+
+import deepdiff
 import pytest
 
 import optuna
 
 try:
-    # neptune-client=0.9.0+ package structure
-    import neptune.new as neptune
+    # neptune-client<1.0.0 package structure
+    with warnings.catch_warnings():
+        # ignore the deprecation warnings
+        warnings.simplefilter("ignore")
+        import neptune.new as neptune
 except ImportError:
-    # neptune-client>=1.0.0 package structure
+    # neptune>=1.0.0 package structure
     import neptune
 
 import neptune_optuna.impl as npt_utils
@@ -14,9 +20,7 @@ import neptune_optuna.impl as npt_utils
 
 @pytest.mark.parametrize("handler_namespace", [None, "handler_namespace"])
 @pytest.mark.parametrize("base_namespace", ["", "base_namespace"])
-def test_e2e(handler_namespace, base_namespace):
-
-    n_trials = 5
+def test_callback(handler_namespace, base_namespace):
 
     run = neptune.init_run()
 
@@ -29,23 +33,59 @@ def test_e2e(handler_namespace, base_namespace):
 
     def objective(trial):
         x = trial.suggest_float("x", -10, 10)
-        return (x - 2) ** 2
+        y = trial.suggest_float("y", -10, 10)
+        return (x + y) ** 2
 
+    n_trials = 5
     study = optuna.create_study()
     study.optimize(objective, n_trials=n_trials, callbacks=[neptune_callback])
 
     validate_run(run, n_trials, study, handler_namespace, base_namespace)
+    assert run["source_code/integrations/neptune-optuna"].fetch() == npt_utils.__version__
+
+    run.stop()
 
 
-def validate_run(run, n_trials, study, handler_namespace, base_namespace):
+def test_log_and_load_study():
+    def objective(trial):
+        x = trial.suggest_float("x", -10, 10)
+        y = trial.suggest_float("y", -10, 10)
+        return (x + y) ** 2
 
+    n_trials = 5
+    study = optuna.create_study()
+    study.optimize(objective, n_trials=n_trials)
+
+    run = neptune.init_run()
+    npt_utils.log_study_metadata(study, run)
+
+    validate_run(run, n_trials, study)
+
+    # Loaded study is the same as the saved one
+    validate_loaded_study(run, study)
+
+    run.stop()
+
+
+def _prefix(handler_namespace, base_namespace):
     prefix = ""
     if handler_namespace is not None:
         prefix = f"{handler_namespace}/"
     if base_namespace != "":
         prefix = f"{prefix}{base_namespace}/"
+    return prefix
 
+
+def validate_loaded_study(run, study):
     run.wait()
+    loaded_study = npt_utils.load_study_from_run(run)
+    assert isinstance(loaded_study, optuna.study.Study)
+    assert deepdiff.DeepDiff(loaded_study, study) == {}
+
+
+def validate_run(run, n_trials, study, handler_namespace=None, base_namespace=""):
+    run.wait()
+    prefix = _prefix(handler_namespace, base_namespace)
 
     assert run.exists(f"{prefix}best")
     assert run.exists(f"{prefix}study")
@@ -64,4 +104,5 @@ def validate_run(run, n_trials, study, handler_namespace, base_namespace):
 
     assert run[f"{prefix}best/params"].fetch() == study.best_params
 
-    assert run["source_code/integrations/neptune-optuna"].fetch() == npt_utils.__version__
+    assert run.exists(f"{prefix}study/study_name")
+    assert run.exists(f"{prefix}study/distributions/")
