@@ -8,6 +8,11 @@
 
 - We are not tracing anymore `study/system_attrs` that was deprecated by Optuna.
 
+## neptune-optuna 0.11.0
+
+We updated the integration to use the most recent version of the Neptune client.
+
+
 ## neptune-optuna 0.10.2
 
 ### Fixes
