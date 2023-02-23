@@ -420,7 +420,7 @@ def log_study_metadata(
 
     if log_distributions:
         for i, trial in enumerate(study.trials):
-            run[f"study/distributions/trial/{i}"].append(stringify_unsupported(trial.distributions))
+            run[f"study/distributions/trial/{i}"] = stringify_unsupported(trial.distributions)
 
     if log_plots:
         _log_plots(
