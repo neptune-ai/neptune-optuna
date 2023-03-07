@@ -70,7 +70,8 @@ class NeptuneCallback:
     * The study object itself, to load it later.
 
     Args:
-        run: Neptune run.
+        run: Neptune run object. You can also pass a namespace handler object; for example,
+            run["test"], in which case all metadata is logged under the "test" namespace.
         base_namespace: Namespace inside the run where your study metadata is logged.
         plots_update_freq: Frequency at which plots are logged and updated in Neptune.
             If you pass an integer k, plots will be updated every k iterations.
