@@ -101,22 +101,16 @@ class NeptuneCallback:
         target_names: List of one or more study objective names to log (see example).
 
     Examples:
-        Create a Run:
-        >>> import neptune.new as neptune
+        Create a run:
+        >>> import neptune
         ... run = neptune.init_run()
 
         Initialize a NeptuneCallback:
-        >>> import neptune.new.integrations.optuna as optuna_utils
-        ... neptune_callback = optuna_utils.NeptuneCallback(run)
+        >>> import neptune.integrations.optuna as npt_utils
+        ... neptune_callback = npt_utils.NeptuneCallback(run)
 
-        Or optionally pass a list of objective names:
-        Single objective:
-        ... neptune_callback = optuna_utils.NeptuneCallback(
-        ...     run,
-        ...     target_names=["accuracy"],
-        ... )
-        Multi-objective:
-        ... neptune_callback = optuna_utils.NeptuneCallback(
+        Or optionally pass a list of one or more objective names:
+        ... neptune_callback = npt_utils.NeptuneCallback(
         ...     run,
         ...     target_names=["FLOPS", "accuracy"],
         ... )
@@ -126,9 +120,8 @@ class NeptuneCallback:
         >>> study = optuna.create_study(direction="maximize")
         ... study.optimize(objective, n_trials=5, callbacks=[neptune_callback])
 
-
-    For more information, see the Neptune-Optuna integration docs page:
-    https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+    For more, see the Neptune-Optuna integration guide:
+    https://docs.neptune.ai/integrations/optuna
     """
 
     def __init__(
@@ -379,7 +372,7 @@ def log_study_metadata(
 
     Examples:
         Create a run:
-        >>> import neptune.new as neptune
+        >>> import neptune
         ... run = neptune.init_run()
 
         Create and run the study:
@@ -387,26 +380,18 @@ def log_study_metadata(
         ... study.optimize(objective, n_trials=5)
 
         Log single and multi-objective study metadata to Neptune:
-        >>> import neptune.new.integrations.optuna as optuna_utils
-        ... optuna_utils.log_study_metadata(study, run)
+        >>> import neptune.integrations.optuna as npt_utils
+        ... npt_utils.log_study_metadata(study, run)
 
-        Or optionally pass a list of objective names:
-        Single-objective:
-        ... optuna_utils.log_study_metadata(
-        ...    study,
-        ...    run,
-        ...    target_names=["accuracy"],
-        ... )
-        Multi-objective:
-        ... optuna_utils.log_study_metadata(
+        Or optionally pass a list of one or more objective names:
+        ... npt_utils.log_study_metadata(
         ...     study,
         ...     run,
         ...     target_names=["FLOPS", "accuracy"],
         ... )
 
-
-    For more information, see the Neptune-Optuna integration docs page:
-    https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+    For more, see the Neptune-Optuna integration guide:
+    https://docs.neptune.ai/integrations/optuna
     """
     run = run[base_namespace]
 
@@ -459,16 +444,16 @@ def load_study_from_run(run: neptune.Run):
 
     Examples:
         Initialize an existing run by passing the run ID:
-        >>> import neptune.new as neptune
+        >>> import neptune
         ... run = neptune.init_run(with_id="PRO-123")
 
         Load study from the run and continue optimization:
-        >>> import neptune_optuna.impl as optuna_utils
-        ... study = optuna_utils.load_study_from_run(run)
+        >>> import neptune.integrations.optuna as npt_utils
+        ... study = npt_utils.load_study_from_run(run)
         ... study.optimize(objective, n_trials=20)
 
-    For more information, see the Neptune-Optuna integration docs page:
-    https://docs.neptune.ai/integrations-and-supported-tools/hyperparameter-optimization/optuna
+    For more, see the Neptune-Optuna integration guide:
+    https://docs.neptune.ai/integrations/optuna
     """
     if run["study/storage_type"].fetch() == "InMemoryStorage":
         return _get_pickle(path="study/study", run=run)
