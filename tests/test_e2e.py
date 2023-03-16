@@ -1,19 +1,11 @@
-import warnings
-
 import deepdiff
+import optuna
 import pytest
 
-import optuna
-
 try:
-    # neptune-client<1.0.0 package structure
-    with warnings.catch_warnings():
-        # ignore the deprecation warnings
-        warnings.simplefilter("ignore")
-        import neptune.new as neptune
+    from neptune import init_run
 except ImportError:
-    # neptune>=1.0.0 package structure
-    import neptune
+    from neptune.new import init_run
 
 import neptune_optuna.impl as npt_utils
 
@@ -22,7 +14,7 @@ import neptune_optuna.impl as npt_utils
 @pytest.mark.parametrize("base_namespace", ["", "base_namespace"])
 def test_callback(handler_namespace, base_namespace):
 
-    run = neptune.init_run()
+    run = init_run()
 
     if handler_namespace is not None:
         handler = run[handler_namespace]
@@ -56,7 +48,7 @@ def test_log_and_load_study():
     study = optuna.create_study()
     study.optimize(objective, n_trials=n_trials)
 
-    run = neptune.init_run()
+    run = init_run()
     npt_utils.log_study_metadata(study, run)
 
     validate_run(run, n_trials, study)

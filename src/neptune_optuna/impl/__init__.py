@@ -21,7 +21,6 @@ __all__ = [
 ]
 
 import contextlib
-import warnings
 from typing import (
     Iterable,
     List,
@@ -31,20 +30,9 @@ from typing import (
 
 import optuna
 
+from neptune_optuna.impl.version import __version__
+
 try:
-    # neptune-client<1.0.0 package structure
-    with warnings.catch_warnings():
-        # ignore the deprecation warnings
-        warnings.simplefilter("ignore")
-        import neptune.new as neptune
-        from neptune.new.integrations.utils import (
-            expect_not_an_experiment,
-            verify_type,
-        )
-        from neptune.new.types import File
-        from neptune.new.utils import stringify_unsupported
-except ImportError:
-    # neptune>=1.0.0 package structure
     import neptune
     from neptune.integrations.utils import (
         expect_not_an_experiment,
@@ -53,7 +41,14 @@ except ImportError:
     from neptune.types import File
     from neptune.utils import stringify_unsupported
 
-from neptune_optuna.impl.version import __version__
+except ImportError:
+    import neptune.new as neptune
+    from neptune.new.integrations.utils import (
+        expect_not_an_experiment,
+        verify_type,
+    )
+    from neptune.new.types import File
+    from neptune.new.utils import stringify_unsupported
 
 INTEGRATION_VERSION_KEY = "source_code/integrations/neptune-optuna"
 
@@ -471,7 +466,7 @@ def _log_study_details(run, study: optuna.Study):
     if _is_multi_objective(study=study):
         run["study/directions"] = study.directions
     else:
-        run["study/direction"] = study.direction
+        run["study/direction"] = stringify_unsupported(study.direction)
 
     run["study/user_attrs"] = study.user_attrs
     with contextlib.suppress(AttributeError):
