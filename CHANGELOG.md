@@ -1,3 +1,9 @@
+## neptune-optuna 1.1.0
+
+### Changes
+- Removed `neptune` and `neptune-client` from base requirements
+- Updated for compatibility with `neptune 1.X`
+
 ## neptune-optuna 1.0.0
 
 ### Fixes
