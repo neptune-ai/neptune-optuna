@@ -1,6 +1,6 @@
 # Neptune + Optuna integration
 
-Neptune is a tool for experiment tracking, model registry, data versioning, and monitoring model training live.
+Neptune is a lightweight experiment tracker that offers a single place to track, compare, store, and collaborate on experiments and models. 
 
 This integration lets you use it as an Optuna visualization dashboard to log and monitor hyperparameter sweeps live.
 
@@ -15,14 +15,13 @@ This integration lets you use it as an Optuna visualization dashboard to log and
   * Study object itself for 'InMemoryStorage' or the database location for the Studies with database storage
 * Load the Study directly from the existing Neptune run
 
-![image](https://user-images.githubusercontent.com/97611089/160636423-82951249-a5d8-40d3-be34-4c2ff470b9db.png)
-*Parallel coordinate plot logged to Neptune*
+![image](https://docs.neptune.ai/img/app/integrations/optuna.png)
 
 ## Resources
 
 * [Documentation](https://docs.neptune.ai/integrations/optuna)
 * [Code example on GitHub](https://github.com/neptune-ai/examples/blob/main/integrations-and-supported-tools/optuna/scripts)
-* [Runs logged in the Neptune app](https://app.neptune.ai/o/common/org/optuna-integration/experiments?split=bth&dash=parallel-coordinates-plot&viewId=b6190a29-91be-4e64-880a-8f6085a6bb78)
+* [Run logged in the Neptune app](https://app.neptune.ai/o/common/org/optuna-integration/runs/details?viewId=b6190a29-91be-4e64-880a-8f6085a6bb78&detailsTab=dashboard&dashboardId=Vizualizations-5ea92658-6a56-4656-b225-e81c6fbfc8ab&shortId=NEP1-13880&type=run)
 * [Run example in Google Colab](https://colab.research.google.com/github/neptune-ai/examples/blob/master/integrations-and-supported-tools/optuna/notebooks/Neptune_Optuna_integration.ipynb)
 
 ## Example
