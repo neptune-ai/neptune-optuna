@@ -10,7 +10,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout
-      uses: v2
+      uses: actions/checkout@v4
       with:
         repository: neptune-ai/neptune-optuna
         path: ${{ inputs.working_directory }}
