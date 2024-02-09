@@ -1,3 +1,8 @@
+## neptune-optuna 1.1.1
+
+### Features
+- Added `log_all_trials` flag in `NeptuneCallback` ([#41](https://github.com/neptune-ai/neptune-optuna/pull/41))
+
 ## neptune-optuna 1.1.0
 
 ### Changes
