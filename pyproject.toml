@@ -23,8 +23,9 @@ scikit-learn = "*"
 pre-commit = { version = "*", optional = true }
 pytest = { version = ">=5.0", optional = true }
 pytest-cov = { version = "2.10.1", optional = true }
-deepdiff = { version = ">=6.2.3", optional = true }
+deepdiff = { version = "6.2.3", optional = true }
 neptune = { version = ">=1.0.0", optional = true }
+cffi = { version = "*", optional = true}
 
 [tool.poetry.extras]
 dev = [
@@ -33,6 +34,7 @@ dev = [
     "pytest-cov",
     "deepdiff",
     "neptune",
+    "cffi",
 ]
 
 [tool.poetry]

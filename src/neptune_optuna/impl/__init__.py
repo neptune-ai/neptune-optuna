@@ -95,6 +95,7 @@ class NeptuneCallback:
         log_plot_optimization_history: If True, the optuna.visualizations.plot_optimization_history
             visualization will be logged to Neptune.
         target_names: List of one or more study objective names to log (see example).
+        log_all_trials: If True, all trials are logged. Defaults to True.
 
     Examples:
         Create a run:
@@ -136,6 +137,7 @@ class NeptuneCallback:
         log_plot_intermediate_values: bool = True,
         log_plot_optimization_history: bool = True,
         target_names: Optional[List[str]] = None,
+        log_all_trials: bool = True,
     ):
 
         expect_not_an_experiment(run)
@@ -165,6 +167,7 @@ class NeptuneCallback:
             (bool, type(None)),
         )
         verify_type("target_names", target_names, (list, type(None)))
+        verify_type("log_all_trials", log_all_trials, bool)
 
         if base_namespace != "":
             self.run = run[base_namespace]
@@ -183,6 +186,7 @@ class NeptuneCallback:
         self._log_plot_intermediate_values = log_plot_intermediate_values
         self._log_plot_optimization_history = log_plot_optimization_history
         self._target_names = target_names
+        self._log_all_trials = log_all_trials
         self._namespaces = None
 
         root_obj = self.run
@@ -194,7 +198,9 @@ class NeptuneCallback:
     def __call__(self, study: optuna.Study, trial: optuna.trial.FrozenTrial):
         if self._namespaces is None:
             self._namespaces = _get_namespaces(study, self._target_names)
-        self._log_trial(study, trial)
+
+        if self._log_all_trials:
+            self._log_trial(study, trial)
         self._log_trial_distributions(trial)
         self._log_best_trials(study)
         self._log_study_details(study, trial)

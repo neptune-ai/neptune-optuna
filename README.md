@@ -1,6 +1,6 @@
 # Neptune + Optuna integration
 
-Neptune is a lightweight experiment tracker that offers a single place to track, compare, store, and collaborate on experiments and models. 
+Neptune is a lightweight experiment tracker that offers a single place to track, compare, store, and collaborate on experiments and models.
 
 This integration lets you use it as an Optuna visualization dashboard to log and monitor hyperparameter sweeps live.
 
@@ -21,7 +21,7 @@ This integration lets you use it as an Optuna visualization dashboard to log and
 
 * [Documentation](https://docs.neptune.ai/integrations/optuna)
 * [Code example on GitHub](https://github.com/neptune-ai/examples/blob/main/integrations-and-supported-tools/optuna/scripts)
-* [Run logged in the Neptune app](https://app.neptune.ai/o/common/org/optuna-integration/runs/details?viewId=b6190a29-91be-4e64-880a-8f6085a6bb78&detailsTab=dashboard&dashboardId=Vizualizations-5ea92658-6a56-4656-b225-e81c6fbfc8ab&shortId=NEP1-13880&type=run)
+* [Run logged in the Neptune app](https://app.neptune.ai/o/common/org/optuna-integration/runs/details?viewId=b6190a29-91be-4e64-880a-8f6085a6bb78&detailsTab=dashboard&dashboardId=Vizualizations-5ea92658-6a56-4656-b225-e81c6fbfc8ab&shortId=NEP1-18517&type=run)
 * [Run example in Google Colab](https://colab.research.google.com/github/neptune-ai/examples/blob/master/integrations-and-supported-tools/optuna/notebooks/Neptune_Optuna_integration.ipynb)
 
 ## Example

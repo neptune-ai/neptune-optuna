@@ -10,9 +10,10 @@ except ImportError:
 import neptune_optuna.impl as npt_utils
 
 
+@pytest.mark.parametrize("log_all_trials", [True, False])
 @pytest.mark.parametrize("handler_namespace", [None, "handler_namespace"])
 @pytest.mark.parametrize("base_namespace", ["", "base_namespace"])
-def test_callback(handler_namespace, base_namespace):
+def test_callback(handler_namespace, base_namespace, log_all_trials):
 
     run = init_run()
 
@@ -21,7 +22,7 @@ def test_callback(handler_namespace, base_namespace):
     else:
         handler = run
 
-    neptune_callback = npt_utils.NeptuneCallback(handler, base_namespace=base_namespace)
+    neptune_callback = npt_utils.NeptuneCallback(handler, base_namespace=base_namespace, log_all_trials=log_all_trials)
 
     def objective(trial):
         x = trial.suggest_float("x", -10, 10)
@@ -32,7 +33,7 @@ def test_callback(handler_namespace, base_namespace):
     study = optuna.create_study()
     study.optimize(objective, n_trials=n_trials, callbacks=[neptune_callback])
 
-    validate_run(run, n_trials, study, handler_namespace, base_namespace)
+    validate_run(run, n_trials, study, handler_namespace, base_namespace, log_all_trials)
     assert run["source_code/integrations/neptune-optuna"].fetch() == npt_utils.__version__
 
     run.stop()
@@ -75,13 +76,12 @@ def validate_loaded_study(run, study):
     assert deepdiff.DeepDiff(loaded_study, study) == {}
 
 
-def validate_run(run, n_trials, study, handler_namespace=None, base_namespace=""):
+def validate_run(run, n_trials, study, handler_namespace=None, base_namespace="", log_all_trials=True):
     run.wait()
     prefix = _prefix(handler_namespace, base_namespace)
 
     assert run.exists(f"{prefix}best")
     assert run.exists(f"{prefix}study")
-    assert run.exists(f"{prefix}trials")
     assert run.exists(f"{prefix}visualizations")
 
     run_structure = run.get_structure()
@@ -89,10 +89,14 @@ def validate_run(run, n_trials, study, handler_namespace=None, base_namespace=""
         run_structure = run_structure[handler_namespace]
     if base_namespace != "":
         run_structure = run_structure[base_namespace]
-    assert len(run_structure["trials"]["trials"]) == n_trials
 
-    assert len(run[f"{prefix}trials/values"].fetch_values()) == n_trials
-    assert len(run[f"{prefix}trials/params/x"].fetch_values()) == n_trials
+    if log_all_trials:
+        assert run.exists(f"{prefix}trials")
+        assert len(run_structure["trials"]["trials"]) == n_trials
+        assert len(run[f"{prefix}trials/values"].fetch_values()) == n_trials
+        assert len(run[f"{prefix}trials/params/x"].fetch_values()) == n_trials
+    else:
+        assert not run.exists(f"{prefix}trials")
 
     assert run[f"{prefix}best/params"].fetch() == study.best_params
 
