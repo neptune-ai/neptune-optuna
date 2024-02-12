@@ -167,7 +167,7 @@ class NeptuneCallback:
             (bool, type(None)),
         )
         verify_type("target_names", target_names, (list, type(None)))
-        verify_type("log_all_trials", log_all_trials, (bool, type(None)))
+        verify_type("log_all_trials", log_all_trials, bool)
 
         if base_namespace != "":
             self.run = run[base_namespace]
