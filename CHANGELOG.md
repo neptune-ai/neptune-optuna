@@ -1,3 +1,11 @@
+## neptune-optuna 1.3.0
+
+### Features
+- `NeptuneCallback` now logs trial-level user attributes ([#44](https://github.com/neptune-ai/neptune-optuna/pull/44))
+
+### Fixes
+- Non-primitive study-level user attributes are now logged correctly ([#44](https://github.com/neptune-ai/neptune-optuna/pull/44))
+
 ## neptune-optuna 1.2.0
 
 ### Features

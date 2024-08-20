@@ -7,30 +7,31 @@ try:
 except ImportError:
     from neptune.new import init_run
 
+from neptune.utils import stringify_unsupported
+
 import neptune_optuna.impl as npt_utils
+
+dummy_user_attr = [1, "a"]
 
 
 @pytest.mark.parametrize("log_all_trials", [True, False])
 @pytest.mark.parametrize("handler_namespace", [None, "handler_namespace"])
 @pytest.mark.parametrize("base_namespace", ["", "base_namespace"])
 def test_callback(handler_namespace, base_namespace, log_all_trials):
-
     run = init_run()
 
-    if handler_namespace is not None:
-        handler = run[handler_namespace]
-    else:
-        handler = run
-
+    handler = run[handler_namespace] if handler_namespace is not None else run
     neptune_callback = npt_utils.NeptuneCallback(handler, base_namespace=base_namespace, log_all_trials=log_all_trials)
 
     def objective(trial):
         x = trial.suggest_float("x", -10, 10)
         y = trial.suggest_float("y", -10, 10)
+        trial.set_user_attr("dummy_trial_key", dummy_user_attr)
         return (x + y) ** 2
 
     n_trials = 5
     study = optuna.create_study()
+    study.set_user_attr("dummy_study_key", dummy_user_attr)
     study.optimize(objective, n_trials=n_trials, callbacks=[neptune_callback])
 
     validate_run(run, n_trials, study, handler_namespace, base_namespace, log_all_trials)
@@ -43,10 +44,12 @@ def test_log_and_load_study():
     def objective(trial):
         x = trial.suggest_float("x", -10, 10)
         y = trial.suggest_float("y", -10, 10)
+        trial.set_user_attr("dummy_trial_key", dummy_user_attr)
         return (x + y) ** 2
 
     n_trials = 5
     study = optuna.create_study()
+    study.set_user_attr("dummy_study_key", dummy_user_attr)
     study.optimize(objective, n_trials=n_trials)
 
     run = init_run()
@@ -61,9 +64,7 @@ def test_log_and_load_study():
 
 
 def _prefix(handler_namespace, base_namespace):
-    prefix = ""
-    if handler_namespace is not None:
-        prefix = f"{handler_namespace}/"
+    prefix = f"{handler_namespace}/" if handler_namespace is not None else ""
     if base_namespace != "":
         prefix = f"{prefix}{base_namespace}/"
     return prefix
@@ -95,10 +96,14 @@ def validate_run(run, n_trials, study, handler_namespace=None, base_namespace=""
         assert len(run_structure["trials"]["trials"]) == n_trials
         assert len(run[f"{prefix}trials/values"].fetch_values()) == n_trials
         assert len(run[f"{prefix}trials/params/x"].fetch_values()) == n_trials
+        assert run[f"{prefix}trials/trials/0/user_attrs/dummy_trial_key"].fetch() == str(
+            stringify_unsupported(dummy_user_attr)
+        )
     else:
         assert not run.exists(f"{prefix}trials")
 
     assert run[f"{prefix}best/params"].fetch() == study.best_params
+    assert run[f"{prefix}study/user_attrs/dummy_study_key"].fetch() == str(stringify_unsupported(dummy_user_attr))
 
     assert run.exists(f"{prefix}study/study_name")
     assert run.exists(f"{prefix}study/distributions/")

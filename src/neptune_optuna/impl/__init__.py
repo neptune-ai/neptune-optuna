@@ -139,7 +139,6 @@ class NeptuneCallback:
         target_names: Optional[List[str]] = None,
         log_all_trials: bool = True,
     ):
-
         expect_not_an_experiment(run)
         verify_type("run", run, (neptune.Run, neptune.handler.Handler))
         verify_type("base_namespace", base_namespace, str)
@@ -169,11 +168,7 @@ class NeptuneCallback:
         verify_type("target_names", target_names, (list, type(None)))
         verify_type("log_all_trials", log_all_trials, bool)
 
-        if base_namespace != "":
-            self.run = run[base_namespace]
-        else:
-            self.run = run
-
+        self.run = run[base_namespace] if base_namespace != "" else run
         self._visualization_backend = visualization_backend
         self._plots_update_freq = plots_update_freq
         self._study_update_freq = study_update_freq
@@ -254,9 +249,7 @@ class NeptuneCallback:
     def _should_log_study(self, trial: optuna.trial.FrozenTrial):
         if self._study_update_freq == "never":
             return False
-        if trial._trial_id % self._study_update_freq == 0:
-            return True
-        return False
+        return trial._trial_id % self._study_update_freq == 0
 
 
 def _log_best_trials(run, study: optuna.Study, namespaces):
@@ -283,7 +276,6 @@ def _is_multi_objective(study: optuna.Study) -> bool:
 
 
 def _get_namespaces(study: optuna.Study, target_names: Optional[List[str]] = None) -> Union[List[str], str]:
-
     if _is_multi_objective(study=study):
         if target_names is None:
             return [f"objective_{index}" for index in range(len(study.directions))]
@@ -474,7 +466,7 @@ def _log_study_details(run, study: optuna.Study):
     else:
         run["study/direction"] = stringify_unsupported(study.direction)
 
-    run["study/user_attrs"] = study.user_attrs
+    run["study/user_attrs"] = stringify_unsupported(study.user_attrs)
     with contextlib.suppress(AttributeError):
         run["study/_study_id"] = study._study_id
         run["study/_storage"] = stringify_unsupported(study._storage)
@@ -608,6 +600,7 @@ def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial,
     handle[f"trials/{trial._trial_id}/distributions"] = stringify_unsupported(trial.distributions)
     handle[f"trials/{trial._trial_id}/intermediate_values"] = stringify_unsupported(trial.intermediate_values)
     handle[f"trials/{trial._trial_id}/params"] = stringify_unsupported(trial.params)
+    handle[f"trials/{trial._trial_id}/user_attrs"] = stringify_unsupported(trial.user_attrs)
 
     if _is_multi_objective(study=study):
         for k, v in enumerate(trial.values):
