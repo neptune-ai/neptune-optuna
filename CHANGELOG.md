@@ -1,3 +1,8 @@
+## neptune-optuna 1.4.0
+
+### Changes
+- Trial folders are now named according to `trial._number` instead of `trial._trial_id` ([#46](https://github.com/neptune-ai/neptune-optuna/pull/46))
+
 ## neptune-optuna 1.3.0
 
 ### Features

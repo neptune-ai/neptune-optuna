@@ -212,7 +212,7 @@ class NeptuneCallback:
         _log_best_trials(self.run, study, namespaces=self._namespaces)
 
     def _log_study_details(self, study, trial):
-        if trial._trial_id == 0:
+        if trial._number == 0:
             _log_study_details(self.run, study)
 
     def _log_plots(self, study, trial):
@@ -242,14 +242,14 @@ class NeptuneCallback:
         elif self._plots_update_freq == "never":
             return False
         else:
-            if trial._trial_id % self._plots_update_freq == 0:
+            if trial._number % self._plots_update_freq == 0:
                 return True
         return False
 
     def _should_log_study(self, trial: optuna.trial.FrozenTrial):
         if self._study_update_freq == "never":
             return False
-        return trial._trial_id % self._study_update_freq == 0
+        return trial._number % self._study_update_freq == 0
 
 
 def _log_best_trials(run, study: optuna.Study, namespaces):
@@ -593,18 +593,17 @@ def _log_plots(
 
 def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False):
     handle = run["best"] if best else run["trials"]
-
-    handle[f"trials/{trial._trial_id}/datetime_start"] = trial.datetime_start
-    handle[f"trials/{trial._trial_id}/datetime_complete"] = trial.datetime_complete
-    handle[f"trials/{trial._trial_id}/duration"] = stringify_unsupported(trial.duration)
-    handle[f"trials/{trial._trial_id}/distributions"] = stringify_unsupported(trial.distributions)
-    handle[f"trials/{trial._trial_id}/intermediate_values"] = stringify_unsupported(trial.intermediate_values)
-    handle[f"trials/{trial._trial_id}/params"] = stringify_unsupported(trial.params)
-    handle[f"trials/{trial._trial_id}/user_attrs"] = stringify_unsupported(trial.user_attrs)
+    handle[f"trials/{trial._number}/datetime_start"] = trial.datetime_start
+    handle[f"trials/{trial._number}/datetime_complete"] = trial.datetime_complete
+    handle[f"trials/{trial._number}/duration"] = stringify_unsupported(trial.duration)
+    handle[f"trials/{trial._number}/distributions"] = stringify_unsupported(trial.distributions)
+    handle[f"trials/{trial._number}/intermediate_values"] = stringify_unsupported(trial.intermediate_values)
+    handle[f"trials/{trial._number}/params"] = stringify_unsupported(trial.params)
+    handle[f"trials/{trial._number}/user_attrs"] = stringify_unsupported(trial.user_attrs)
 
     if _is_multi_objective(study=study):
         for k, v in enumerate(trial.values):
-            handle[f"trials/{trial._trial_id}/values/{namespaces[k]}"] = stringify_unsupported(v)
+            handle[f"trials/{trial._number}/values/{namespaces[k]}"] = stringify_unsupported(v)
         if best:
             handle["params"] = stringify_unsupported(trial.params)
             for k, v in enumerate(trial.values):
@@ -612,21 +611,21 @@ def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial,
         else:
             handle["params"].append(stringify_unsupported(trial.params))
             for k, v in enumerate(trial.values):
-                handle[f"values/{namespaces[k]}"].append(stringify_unsupported(v), step=trial._trial_id)
+                handle[f"values/{namespaces[k]}"].append(stringify_unsupported(v), step=trial._number)
 
     else:
-        handle[f"trials/{trial._trial_id}/value"] = stringify_unsupported(trial.value)
+        handle[f"trials/{trial._number}/value"] = stringify_unsupported(trial.value)
         if best:
             handle["value"] = stringify_unsupported(trial.value)
             handle["params"] = stringify_unsupported(trial.params)
             handle["value|params"] = f"value: {trial.value}| params: {trial.params}"
         else:
-            handle["values"].append(stringify_unsupported(trial.value), step=trial._trial_id)
+            handle["values"].append(stringify_unsupported(trial.value), step=trial._number)
             handle["params"].append(stringify_unsupported(trial.params))
             handle["values|params"].append(f"value: {trial.value}| params: {trial.params}")
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
-        handle[f"trials/{trial._trial_id}/state"] = repr(trial.state)
+        handle[f"trials/{trial._number}/state"] = repr(trial.state)
 
 
 def _log_trials(
