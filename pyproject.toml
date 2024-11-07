@@ -36,6 +36,7 @@ dev = [
     "deepdiff",
     "neptune",
     "cffi",
+    "numpy",
 ]
 
 [tool.poetry]
@@ -50,7 +51,7 @@ name = "neptune-optuna"
 readme = "README.md"
 version = "0.0.0"
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
@@ -60,8 +61,8 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Operating System :: Unix",
-    "Topic :: Software Development :: Libraries :: Python Modules",
     "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 keywords = [
@@ -71,17 +72,15 @@ keywords = [
     "ML Model Store",
     "ML Metadata Store",
 ]
-packages = [
-    { include = "neptune_optuna", from = "src" },
-]
+packages = [{ include = "neptune_optuna", from = "src" }]
 
 [tool.poetry.urls]
 "Tracker" = "https://github.com/neptune-ai/neptune-optuna/issues"
-"Documentation" = "https://docs.neptune.ai/integrations-and-supported-tools/model-training/optuna"
+"Documentation" = "https://docs.neptune.ai/integrations/optuna/"
 
 [tool.black]
 line-length = 120
-target-version = ['py37', 'py38', 'py39', 'py310']
+target-version = ['py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
 exclude = '''
 /(

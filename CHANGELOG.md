@@ -1,3 +1,8 @@
+## neptune-optuna 1.4.1
+
+### Fixes
+- Moved `numpy<2.0` to `dev` dependencies ([#48](https://github.com/neptune-ai/neptune-optuna/pull/48))
+
 ## neptune-optuna 1.4.0
 
 ### Changes
