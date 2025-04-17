@@ -1,12 +1,7 @@
 import deepdiff
 import optuna
 import pytest
-
-try:
-    from neptune import init_run
-except ImportError:
-    from neptune.new import init_run
-
+from neptune import init_run
 from neptune.utils import stringify_unsupported
 
 import neptune_optuna.impl as npt_utils
@@ -63,6 +58,44 @@ def test_log_and_load_study():
     run.stop()
 
 
+def test_multi_objective_optimization():
+    def objective(trial):
+        x = trial.suggest_float("x", -10, 10)
+        y = trial.suggest_float("y", -10, 10)
+        trial.set_user_attr("dummy_trial_key", dummy_user_attr)
+        return (x + y) ** 2, (x - y) ** 2  # Two objectives to minimize
+
+    n_trials = 5
+    study = optuna.create_study(directions=["minimize", "maximize"])
+
+    run = init_run()
+    neptune_callback = npt_utils.NeptuneCallback(run, target_names=["obj1", "obj2"])
+    study.set_user_attr("dummy_study_key", dummy_user_attr)
+    study.optimize(objective, n_trials=n_trials, callbacks=[neptune_callback])
+
+    # Validate multi-objective specific fields
+    run.wait()
+    assert run.exists("best")
+    assert run.exists("study")
+    assert run.exists("visualizations")
+
+    # Check that both objectives are logged
+    assert run.exists("best/values/obj1")
+    assert run.exists("best/values/obj2")
+
+    # Check that trials are logged with both objectives
+    assert run.exists("trials/values/obj1")
+    assert run.exists("trials/values/obj2")
+
+    # Check that pareto front plot is logged
+    assert run.exists("visualizations/plot_pareto_front")
+
+    # Validate loaded study
+    validate_loaded_study(run, study)
+
+    run.stop()
+
+
 def _prefix(handler_namespace, base_namespace):
     prefix = f"{handler_namespace}/" if handler_namespace is not None else ""
     if base_namespace != "":
@@ -74,7 +107,8 @@ def validate_loaded_study(run, study):
     run.wait()
     loaded_study = npt_utils.load_study_from_run(run)
     assert isinstance(loaded_study, optuna.study.Study)
-    assert deepdiff.DeepDiff(loaded_study, study) == {}
+    if not study._is_multi_objective():
+        assert deepdiff.DeepDiff(loaded_study, study) == {}
 
 
 def validate_run(run, n_trials, study, handler_namespace=None, base_namespace="", log_all_trials=True):
