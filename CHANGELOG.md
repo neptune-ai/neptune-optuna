@@ -1,3 +1,8 @@
+## neptune-optuna 1.4.2
+
+### Fixes
+- Ensures pruned trials are handled and logged in single and multi-objective studies ([#51](https://github.com/neptune-ai/neptune-optuna/pull/56))
+
 ## neptune-optuna 1.4.1
 
 ### Fixes
