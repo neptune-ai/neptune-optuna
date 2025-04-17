@@ -602,31 +602,40 @@ def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial,
     handle[f"trials/{trial._number}/user_attrs"] = stringify_unsupported(trial.user_attrs)
 
     if _is_multi_objective(study=study):
-        for k, v in enumerate(trial.values):
-            handle[f"trials/{trial._number}/values/{namespaces[k]}"] = stringify_unsupported(v)
-        if best:
-            handle["params"] = stringify_unsupported(trial.params)
-            for k, v in enumerate(trial.values):
-                handle[f"values/{namespaces[k]}"] = stringify_unsupported(v)
+        if trial.state == optuna.trial.TrialState.PRUNED:
+            handle[f"trials/{trial._number}/is_pruned"] = True
         else:
-            handle["params"].append(stringify_unsupported(trial.params))
+            handle[f"trials/{trial._number}/is_pruned"] = False
+            # Log non-pruned trials to Neptune
             for k, v in enumerate(trial.values):
-                handle[f"values/{namespaces[k]}"].append(stringify_unsupported(v), step=trial._number)
+                handle[f"trials/{trial._number}/values/{namespaces[k]}"] = stringify_unsupported(v)
+            if best:
+                handle["params"] = stringify_unsupported(trial.params)
+                for k, v in enumerate(trial.values):
+                    handle[f"values/{namespaces[k]}"] = stringify_unsupported(v)
+            else:
+                handle["params"].append(stringify_unsupported(trial.params))
+                for k, v in enumerate(trial.values):
+                    handle[f"values/{namespaces[k]}"].append(stringify_unsupported(v), step=trial._number)
 
     else:
-        handle[f"trials/{trial._number}/value"] = stringify_unsupported(trial.value)
-        if best:
-            handle["value"] = stringify_unsupported(trial.value)
-            handle["params"] = stringify_unsupported(trial.params)
-            handle["value|params"] = f"value: {trial.value}| params: {trial.params}"
+        if trial.state == optuna.trial.TrialState.PRUNED:
+            handle[f"trials/{trial._number}/is_pruned"] = True
         else:
-            handle["values"].append(stringify_unsupported(trial.value), step=trial._number)
-            handle["params"].append(stringify_unsupported(trial.params))
-            handle["values|params"].append(f"value: {trial.value}| params: {trial.params}")
+            handle[f"trials/{trial._number}/is_pruned"] = False
+            # Log non-pruned trials to Neptune
+            handle[f"trials/{trial._number}/value"] = stringify_unsupported(trial.value)
+            if best:
+                handle["value"] = stringify_unsupported(trial.value)
+                handle["params"] = stringify_unsupported(trial.params)
+                handle["value|params"] = f"value: {trial.value}| params: {trial.params}"
+            else:
+                handle["values"].append(stringify_unsupported(trial.value), step=trial._number)
+                handle["params"].append(stringify_unsupported(trial.params))
+                handle["values|params"].append(f"value: {trial.value}| params: {trial.params}")
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
         handle[f"trials/{trial._number}/state"] = repr(trial.state)
-
 
 def _log_trials(
     run,

@@ -107,3 +107,51 @@ def validate_run(run, n_trials, study, handler_namespace=None, base_namespace=""
 
     assert run.exists(f"{prefix}study/study_name")
     assert run.exists(f"{prefix}study/distributions/")
+
+def test_log_pruned_trials_multi_objective():
+    prefix = _prefix(None, "")
+    run = init_run()
+    # neptune_callback = npt_utils.NeptuneCallback(run)
+
+    def objective(trial):
+        test_value = trial.suggest_float("test_value", -10, -1)
+        if test_value < 0 and trial.number == 0:
+            raise optuna.TrialPruned()
+        return test_value, -test_value
+
+    study = optuna.create_study(directions=["minimize", "maximize"])
+    study.optimize(objective, n_trials=2, callbacks=None)
+    
+    # Log charts and study after the sweep is complete
+    npt_utils.log_study_metadata(study, run)
+
+    run.wait()
+    assert run[f"trials/trials/0/is_pruned"].fetch() == True
+    assert run[f"trials/trials/1/is_pruned"].fetch() == False
+    assert run.exists(f"trials/trials/1/values/objective_0")
+    assert run.exists(f"trials/trials/1/values/objective_1")
+
+    run.stop()
+
+def test_log_pruned_trials_single_objective():
+    run = init_run()
+    # neptune_callback = npt_utils.NeptuneCallback(run)
+
+    def objective(trial):
+        test_value = trial.suggest_float("test_value", -10, -1)
+        if test_value < 0 and trial.number == 0:
+            raise optuna.TrialPruned()
+        return test_value
+
+    study = optuna.create_study(directions=["maximize"])
+    study.optimize(objective, n_trials=2, callbacks=None)
+    
+    # Log charts and study after the sweep is complete
+    npt_utils.log_study_metadata(study, run)
+
+    run.wait()
+    assert run[f"trials/trials/0/is_pruned"].fetch() == True
+    assert run[f"trials/trials/1/is_pruned"].fetch() == False
+    assert run.exists(f"trials/trials/1/value")
+
+    run.stop()
