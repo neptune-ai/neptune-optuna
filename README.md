@@ -1,7 +1,7 @@
 # Neptune + Optuna integration
 
 > [!IMPORTANT]
-> This integration works with the `neptune<2.0` Python client.<br/>
+> This integration works with Neptune Python client version `1.x`.<br/>
 
 Neptune is an experiment tracker purpose-built for foundation model training.
 
