@@ -195,3 +195,23 @@ def test_log_pruned_trials_multi_objective_with_callbacks():
     assert run.exists("trials/trials/1/values/objective_1")
 
     run.stop()
+
+# Test if all trials in study are pruned
+def test_all_trials_pruned():
+    run = init_run()
+    neptune_callback = npt_utils.NeptuneCallback(run)
+
+    def objective(trial):
+        test_value = trial.suggest_float("test_value", -10, -1)
+        if test_value < 0:
+            raise optuna.TrialPruned()
+        return test_value, -test_value
+
+    study = optuna.create_study(directions=["maximize", "minimize"])
+    study.optimize(objective, n_trials=2, callbacks=[neptune_callback])
+
+    run.wait()
+    assert run["trials/trials/0/is_pruned"].fetch() == True
+    assert run["trials/trials/1/is_pruned"].fetch() == True
+
+    run.stop()
