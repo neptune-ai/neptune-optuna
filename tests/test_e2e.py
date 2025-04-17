@@ -111,7 +111,6 @@ def validate_run(run, n_trials, study, handler_namespace=None, base_namespace=""
 def test_log_pruned_trials_multi_objective():
     prefix = _prefix(None, "")
     run = init_run()
-    # neptune_callback = npt_utils.NeptuneCallback(run)
 
     def objective(trial):
         test_value = trial.suggest_float("test_value", -10, -1)
@@ -122,7 +121,6 @@ def test_log_pruned_trials_multi_objective():
     study = optuna.create_study(directions=["minimize", "maximize"])
     study.optimize(objective, n_trials=2, callbacks=None)
     
-    # Log charts and study after the sweep is complete
     npt_utils.log_study_metadata(study, run)
 
     run.wait()
@@ -135,7 +133,6 @@ def test_log_pruned_trials_multi_objective():
 
 def test_log_pruned_trials_single_objective():
     run = init_run()
-    # neptune_callback = npt_utils.NeptuneCallback(run)
 
     def objective(trial):
         test_value = trial.suggest_float("test_value", -10, -1)
@@ -153,5 +150,48 @@ def test_log_pruned_trials_single_objective():
     assert run[f"trials/trials/0/is_pruned"].fetch() == True
     assert run[f"trials/trials/1/is_pruned"].fetch() == False
     assert run.exists(f"trials/trials/1/value")
+
+    run.stop()
+
+def test_log_pruned_trials_single_objective_with_callbacks():
+    run = init_run()
+    neptune_callback = npt_utils.NeptuneCallback(run)
+
+    def objective(trial):
+        test_value = trial.suggest_float("test_value", -10, -1)
+        if test_value < 0 and trial.number == 0:
+            raise optuna.TrialPruned()
+        return test_value
+
+    study = optuna.create_study(directions=["maximize"])
+    study.optimize(objective, n_trials=2, callbacks=[neptune_callback])
+
+    run.wait()
+    assert run["trials/trials/0/is_pruned"].fetch() == True
+    assert run["trials/trials/1/is_pruned"].fetch() == False
+    assert run["best/trials/1/is_pruned"].fetch() == False
+    assert run.exists("trials/trials/1/value")
+
+    run.stop()
+
+def test_log_pruned_trials_multi_objective_with_callbacks():
+    run = init_run()
+    neptune_callback = npt_utils.NeptuneCallback(run)
+
+    def objective(trial):
+        test_value = trial.suggest_float("test_value", -10, -1)
+        if test_value < 0 and trial.number == 0:
+            raise optuna.TrialPruned()
+        return test_value, -test_value
+
+    study = optuna.create_study(directions=["maximize", "minimize"])
+    study.optimize(objective, n_trials=2, callbacks=[neptune_callback])
+
+    run.wait()
+    assert run["trials/trials/0/is_pruned"].fetch() == True
+    assert run["trials/trials/1/is_pruned"].fetch() == False
+    assert run["best/trials/1/is_pruned"].fetch() == False
+    assert run.exists("trials/trials/1/values/objective_0")
+    assert run.exists("trials/trials/1/values/objective_1")
 
     run.stop()

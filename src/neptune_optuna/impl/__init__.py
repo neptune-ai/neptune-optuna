@@ -253,23 +253,29 @@ class NeptuneCallback:
 
 
 def _log_best_trials(run, study: optuna.Study, namespaces):
-    if _is_multi_objective(study=study):
-        _log_trials(
-            run,
-            study,
-            trials=study.best_trials,
-            namespaces=namespaces,
-            best=True,
-        )
+    # Get all valid completed trials
+    valid_trials = [trial for trial in study.get_trials()
+                   if trial.state == optuna.trial.TrialState.COMPLETE]
+    
+    if len(valid_trials) > 0: # Only log best trials if there are valid trials
+        if _is_multi_objective(study=study):
+            _log_trials(
+                run,
+                study,
+                trials=valid_trials,
+                namespaces=namespaces,
+                best=True,
+            )
+        else:
+            _log_single_trial(
+                run,
+                study,
+                trial=study.best_trial,
+                namespaces=namespaces,
+                best=True,
+            )
     else:
-        _log_single_trial(
-            run,
-            study,
-            trial=study.best_trial,
-            namespaces=namespaces,
-            best=True,
-        )
-
+        print("No valid completed trials found in the study. All trials are either pruned or failed.")
 
 def _is_multi_objective(study: optuna.Study) -> bool:
     return len(study.directions) > 1
