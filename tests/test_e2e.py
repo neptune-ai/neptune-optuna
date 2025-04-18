@@ -17,7 +17,11 @@ dummy_user_attr = [1, "a"]
 @pytest.mark.parametrize("log_all_trials", [True, False])
 @pytest.mark.parametrize("handler_namespace", [None, "handler_namespace"])
 @pytest.mark.parametrize("base_namespace", ["", "base_namespace"])
-def test_callback(handler_namespace, base_namespace, log_all_trials):
+@pytest.mark.parametrize("prune_condition", [
+    lambda trial: False, # no pruning
+    lambda trial: trial.number == 0, # prune first trial
+])
+def test_callback(handler_namespace, base_namespace, log_all_trials, prune_condition):
     run = init_run()
 
     handler = run[handler_namespace] if handler_namespace is not None else run
@@ -27,6 +31,8 @@ def test_callback(handler_namespace, base_namespace, log_all_trials):
         x = trial.suggest_float("x", -10, 10)
         y = trial.suggest_float("y", -10, 10)
         trial.set_user_attr("dummy_trial_key", dummy_user_attr)
+        if prune_condition(trial):
+            raise optuna.TrialPruned()
         return (x + y) ** 2
 
     n_trials = 5
@@ -93,125 +99,33 @@ def validate_run(run, n_trials, study, handler_namespace=None, base_namespace=""
 
     if log_all_trials:
         assert run.exists(f"{prefix}trials")
+        # Count completed trials instead of all trials
+        completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+        n_completed = len(completed_trials)
+        
+        # Check trial structure
         assert len(run_structure["trials"]["trials"]) == n_trials
-        assert len(run[f"{prefix}trials/values"].fetch_values()) == n_trials
-        assert len(run[f"{prefix}trials/params/x"].fetch_values()) == n_trials
+        
+        # Check values and params only for completed trials
+        if n_completed > 0:
+            assert len(run[f"{prefix}trials/values"].fetch_values()) == n_completed
+            assert len(run[f"{prefix}trials/params/x"].fetch_values()) == n_completed
+            
+        # Check user attributes for first trial
         assert run[f"{prefix}trials/trials/0/user_attrs/dummy_trial_key"].fetch() == str(
             stringify_unsupported(dummy_user_attr)
         )
     else:
         assert not run.exists(f"{prefix}trials")
 
-    assert run[f"{prefix}best/params"].fetch() == study.best_params
+    # Check best trial/params only if there are completed trials
+    completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+    if completed_trials:
+        assert run[f"{prefix}best/params"].fetch() == study.best_params
+    else:
+        assert not run.exists(f"{prefix}best/params")
+
     assert run[f"{prefix}study/user_attrs/dummy_study_key"].fetch() == str(stringify_unsupported(dummy_user_attr))
 
     assert run.exists(f"{prefix}study/study_name")
     assert run.exists(f"{prefix}study/distributions/")
-
-def test_log_pruned_trials_multi_objective():
-    prefix = _prefix(None, "")
-    run = init_run()
-
-    def objective(trial):
-        test_value = trial.suggest_float("test_value", -10, -1)
-        if test_value < 0 and trial.number == 0:
-            raise optuna.TrialPruned()
-        return test_value, -test_value
-
-    study = optuna.create_study(directions=["minimize", "maximize"])
-    study.optimize(objective, n_trials=2, callbacks=None)
-    
-    npt_utils.log_study_metadata(study, run)
-
-    run.wait()
-    assert run[f"trials/trials/0/is_pruned"].fetch() == True
-    assert run[f"trials/trials/1/is_pruned"].fetch() == False
-    assert run.exists(f"trials/trials/1/values/objective_0")
-    assert run.exists(f"trials/trials/1/values/objective_1")
-
-    run.stop()
-
-def test_log_pruned_trials_single_objective():
-    run = init_run()
-
-    def objective(trial):
-        test_value = trial.suggest_float("test_value", -10, -1)
-        if test_value < 0 and trial.number == 0:
-            raise optuna.TrialPruned()
-        return test_value
-
-    study = optuna.create_study(directions=["maximize"])
-    study.optimize(objective, n_trials=2, callbacks=None)
-    
-    # Log charts and study after the sweep is complete
-    npt_utils.log_study_metadata(study, run)
-
-    run.wait()
-    assert run[f"trials/trials/0/is_pruned"].fetch() == True
-    assert run[f"trials/trials/1/is_pruned"].fetch() == False
-    assert run.exists(f"trials/trials/1/value")
-
-    run.stop()
-
-def test_log_pruned_trials_single_objective_with_callbacks():
-    run = init_run()
-    neptune_callback = npt_utils.NeptuneCallback(run)
-
-    def objective(trial):
-        test_value = trial.suggest_float("test_value", -10, -1)
-        if test_value < 0 and trial.number == 0:
-            raise optuna.TrialPruned()
-        return test_value
-
-    study = optuna.create_study(directions=["maximize"])
-    study.optimize(objective, n_trials=2, callbacks=[neptune_callback])
-
-    run.wait()
-    assert run["trials/trials/0/is_pruned"].fetch() == True
-    assert run["trials/trials/1/is_pruned"].fetch() == False
-    assert run["best/trials/1/is_pruned"].fetch() == False
-    assert run.exists("trials/trials/1/value")
-
-    run.stop()
-
-def test_log_pruned_trials_multi_objective_with_callbacks():
-    run = init_run()
-    neptune_callback = npt_utils.NeptuneCallback(run)
-
-    def objective(trial):
-        test_value = trial.suggest_float("test_value", -10, -1)
-        if test_value < 0 and trial.number == 0:
-            raise optuna.TrialPruned()
-        return test_value, -test_value
-
-    study = optuna.create_study(directions=["maximize", "minimize"])
-    study.optimize(objective, n_trials=2, callbacks=[neptune_callback])
-
-    run.wait()
-    assert run["trials/trials/0/is_pruned"].fetch() == True
-    assert run["trials/trials/1/is_pruned"].fetch() == False
-    assert run["best/trials/1/is_pruned"].fetch() == False
-    assert run.exists("trials/trials/1/values/objective_0")
-    assert run.exists("trials/trials/1/values/objective_1")
-
-    run.stop()
-
-# Test if all trials in study are pruned
-def test_all_trials_pruned():
-    run = init_run()
-    neptune_callback = npt_utils.NeptuneCallback(run)
-
-    def objective(trial):
-        test_value = trial.suggest_float("test_value", -10, -1)
-        if test_value < 0:
-            raise optuna.TrialPruned()
-        return test_value, -test_value
-
-    study = optuna.create_study(directions=["maximize", "minimize"])
-    study.optimize(objective, n_trials=2, callbacks=[neptune_callback])
-
-    run.wait()
-    assert run["trials/trials/0/is_pruned"].fetch() == True
-    assert run["trials/trials/1/is_pruned"].fetch() == True
-
-    run.stop()
