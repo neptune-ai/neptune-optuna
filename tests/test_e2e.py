@@ -40,7 +40,20 @@ def test_callback(handler_namespace, base_namespace, log_all_trials, prune_condi
     study.set_user_attr("dummy_study_key", dummy_user_attr)
     study.optimize(objective, n_trials=n_trials, callbacks=[neptune_callback])
 
+    # Validate the run
     validate_run(run, n_trials, study, handler_namespace, base_namespace, log_all_trials)
+    
+    # Additional validation for pruned trials
+    if log_all_trials:
+        prefix = _prefix(handler_namespace, base_namespace)
+        for i in range(n_trials):
+            trial = study.trials[i]
+            is_pruned = trial.state == optuna.trial.TrialState.PRUNED
+            if i == 0: # Check first trial
+                assert run[f"{prefix}trials/trials/{i}/is_pruned"].fetch() == is_pruned
+            else:
+                assert run[f"{prefix}trials/trials/{i}/is_pruned"].fetch() == False
+
     assert run["source_code/integrations/neptune-optuna"].fetch() == npt_utils.__version__
 
     run.stop()
