@@ -1,3 +1,8 @@
+## neptune-optuna 1.5.0
+
+### Features
+- Extended `target_names` support for single-objective studies ([#55](https://github.com/neptune-ai/neptune-optuna/pull/55))
+
 ## neptune-optuna 1.4.1
 
 ### Fixes
