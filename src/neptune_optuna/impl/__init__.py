@@ -291,7 +291,7 @@ def _get_namespaces(study: optuna.Study, target_names: Optional[List[str]] = Non
 
     else:
         if target_names is None:
-            return "objective_value"
+            return "value"
 
         assert len(target_names) == len(
             [study.direction]
@@ -612,17 +612,17 @@ def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial,
             handle["params"].append(stringify_unsupported(trial.params))
             for k, v in enumerate(trial.values):
                 handle[f"values/{namespaces[k]}"].append(stringify_unsupported(v), step=trial._number)
-
     else:
-        handle[f"trials/{trial._number}/value"] = stringify_unsupported(trial.value)
+        handle[f"trials/{trial._number}/{namespaces}"] = stringify_unsupported(trial.value)
         if best:
-            handle["value"] = stringify_unsupported(trial.value)
+            handle[namespaces] = stringify_unsupported(trial.value)
             handle["params"] = stringify_unsupported(trial.params)
-            handle["value|params"] = f"value: {trial.value}| params: {trial.params}"
+            handle[f"{namespaces}|params"] = f"{namespaces}: {trial.value}| params: {trial.params}"
         else:
-            handle["values"].append(stringify_unsupported(trial.value), step=trial._number)
+            value_key = "values" if namespaces == "value" else namespaces  # For backward compatibility
+            handle[f"{value_key}"].append(stringify_unsupported(trial.value), step=trial._number)
             handle["params"].append(stringify_unsupported(trial.params))
-            handle["values|params"].append(f"value: {trial.value}| params: {trial.params}")
+            handle[f"{value_key}|params"].append(f"{value_key}: {trial.value}| params: {trial.params}")
 
     if trial.state.is_finished() and trial.state != optuna.trial.TrialState.COMPLETE:
         handle[f"trials/{trial._number}/state"] = repr(trial.state)
