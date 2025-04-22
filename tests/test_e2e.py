@@ -17,10 +17,13 @@ dummy_user_attr = [1, "a"]
 @pytest.mark.parametrize("log_all_trials", [True, False])
 @pytest.mark.parametrize("handler_namespace", [None, "handler_namespace"])
 @pytest.mark.parametrize("base_namespace", ["", "base_namespace"])
-@pytest.mark.parametrize("prune_condition", [
-    lambda trial: False, # no pruning
-    lambda trial: trial.number == 0, # prune first trial
-])
+@pytest.mark.parametrize(
+    "prune_condition",
+    [
+        lambda trial: False,
+        lambda trial: trial.number == 0,
+    ],
+)
 def test_callback(handler_namespace, base_namespace, log_all_trials, prune_condition):
     run = init_run()
 
@@ -40,19 +43,17 @@ def test_callback(handler_namespace, base_namespace, log_all_trials, prune_condi
     study.set_user_attr("dummy_study_key", dummy_user_attr)
     study.optimize(objective, n_trials=n_trials, callbacks=[neptune_callback])
 
-    # Validate the run
     validate_run(run, n_trials, study, handler_namespace, base_namespace, log_all_trials)
-    
-    # Additional validation for pruned trials
+
     if log_all_trials:
         prefix = _prefix(handler_namespace, base_namespace)
         for i in range(n_trials):
             trial = study.trials[i]
             is_pruned = trial.state == optuna.trial.TrialState.PRUNED
-            if i == 0: # Check first trial
+            if i == 0:
                 assert run[f"{prefix}trials/trials/{i}/is_pruned"].fetch() == is_pruned
             else:
-                assert run[f"{prefix}trials/trials/{i}/is_pruned"].fetch() == False
+                assert not run[f"{prefix}trials/trials/{i}/is_pruned"].fetch()
 
     assert run["source_code/integrations/neptune-optuna"].fetch() == npt_utils.__version__
 
@@ -112,26 +113,22 @@ def validate_run(run, n_trials, study, handler_namespace=None, base_namespace=""
 
     if log_all_trials:
         assert run.exists(f"{prefix}trials")
-        # Count completed trials instead of all trials
+
         completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
         n_completed = len(completed_trials)
-        
-        # Check trial structure
+
         assert len(run_structure["trials"]["trials"]) == n_trials
-        
-        # Check values and params only for completed trials
+
         if n_completed > 0:
             assert len(run[f"{prefix}trials/values"].fetch_values()) == n_completed
             assert len(run[f"{prefix}trials/params/x"].fetch_values()) == n_completed
-            
-        # Check user attributes for first trial
+
         assert run[f"{prefix}trials/trials/0/user_attrs/dummy_trial_key"].fetch() == str(
             stringify_unsupported(dummy_user_attr)
         )
     else:
         assert not run.exists(f"{prefix}trials")
 
-    # Check best trial/params only if there are completed trials
     completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
     if completed_trials:
         assert run[f"{prefix}best/params"].fetch() == study.best_params
