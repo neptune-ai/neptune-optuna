@@ -253,22 +253,23 @@ class NeptuneCallback:
 
 
 def _log_best_trials(run, study: optuna.Study, namespaces):
-    if _is_multi_objective(study=study):
-        _log_trials(
-            run,
-            study,
-            trials=study.best_trials,
-            namespaces=namespaces,
-            best=True,
-        )
-    else:
-        _log_single_trial(
-            run,
-            study,
-            trial=study.best_trial,
-            namespaces=namespaces,
-            best=True,
-        )
+    if completed_trials := [trial for trial in study.get_trials() if trial.state == optuna.trial.TrialState.COMPLETE]:
+        if _is_multi_objective(study=study):
+            _log_trials(
+                run,
+                study,
+                trials=completed_trials,
+                namespaces=namespaces,
+                best=True,
+            )
+        else:
+            _log_single_trial(
+                run,
+                study,
+                trial=study.best_trial,
+                namespaces=namespaces,
+                best=True,
+            )
 
 
 def _is_multi_objective(study: optuna.Study) -> bool:
@@ -462,7 +463,7 @@ def _log_study_details(run, study: optuna.Study):
     run["study/study_name"] = study.study_name
 
     if _is_multi_objective(study=study):
-        run["study/directions"] = study.directions
+        run["study/directions"] = stringify_unsupported(study.directions)
     else:
         run["study/direction"] = stringify_unsupported(study.direction)
 
@@ -591,6 +592,10 @@ def _log_plots(
         handle["plot_pareto_front"] = neptune.types.File.as_html(vis.plot_pareto_front(study, target_names=namespaces))
 
 
+def _is_pruned(trial: optuna.trial.FrozenTrial) -> bool:
+    return trial.state == optuna.trial.TrialState.PRUNED
+
+
 def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial, namespaces, best=False):
     handle = run["best"] if best else run["trials"]
     handle[f"trials/{trial._number}/datetime_start"] = trial.datetime_start
@@ -602,18 +607,28 @@ def _log_single_trial(run, study: optuna.Study, trial: optuna.trial.FrozenTrial,
     handle[f"trials/{trial._number}/user_attrs"] = stringify_unsupported(trial.user_attrs)
 
     if _is_multi_objective(study=study):
-        for k, v in enumerate(trial.values):
-            handle[f"trials/{trial._number}/values/{namespaces[k]}"] = stringify_unsupported(v)
-        if best:
-            handle["params"] = stringify_unsupported(trial.params)
-            for k, v in enumerate(trial.values):
-                handle[f"values/{namespaces[k]}"] = stringify_unsupported(v)
+        if _is_pruned(trial):
+            handle[f"trials/{trial._number}/is_pruned"] = True
         else:
-            handle["params"].append(stringify_unsupported(trial.params))
-            for k, v in enumerate(trial.values):
-                handle[f"values/{namespaces[k]}"].append(stringify_unsupported(v), step=trial._number)
+            handle[f"trials/{trial._number}/is_pruned"] = False
 
+            for k, v in enumerate(trial.values):
+                handle[f"trials/{trial._number}/values/{namespaces[k]}"].append(v)
+
+            if best:
+                handle["params"] = stringify_unsupported(trial.params)
+                for k, v in enumerate(trial.values):
+                    handle[f"values/{namespaces[k]}"].append(stringify_unsupported(v))
+            else:
+                handle["params"].append(stringify_unsupported(trial.params))
+                for k, v in enumerate(trial.values):
+                    handle[f"values/{namespaces[k]}"].append(stringify_unsupported(v), step=trial._number)
+
+    elif _is_pruned(trial):
+        handle[f"trials/{trial._number}/is_pruned"] = True
     else:
+        handle[f"trials/{trial._number}/is_pruned"] = False
+
         handle[f"trials/{trial._number}/value"] = stringify_unsupported(trial.value)
         if best:
             handle["value"] = stringify_unsupported(trial.value)
