@@ -118,7 +118,7 @@ class NeptuneCallback:
         ... study.optimize(objective, n_trials=5, callbacks=[neptune_callback])
 
     For more, see the Neptune-Optuna integration guide:
-    https://docs.neptune.ai/integrations/optuna
+    https://docs-legacy.neptune.ai/integrations/optuna
     """
 
     def __init__(
@@ -386,7 +386,7 @@ def log_study_metadata(
         ... )
 
     For more, see the Neptune-Optuna integration guide:
-    https://docs.neptune.ai/integrations/optuna
+    https://docs-legacy.neptune.ai/integrations/optuna
     """
     run = run[base_namespace]
 
@@ -448,7 +448,7 @@ def load_study_from_run(run: neptune.Run):
         ... study.optimize(objective, n_trials=20)
 
     For more, see the Neptune-Optuna integration guide:
-    https://docs.neptune.ai/integrations/optuna
+    https://docs-legacy.neptune.ai/integrations/optuna
     """
     if run["study/storage_type"].fetch() == "InMemoryStorage":
         return _get_pickle(path="study/study", run=run)

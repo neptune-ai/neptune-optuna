@@ -19,7 +19,7 @@ if not (find_spec("neptune") or find_spec("neptune-client")):
             The Neptune client library was not found.
             Install the neptune package with
                 `pip install neptune`
-            Need help? -> https://docs.neptune.ai/setup/installation/"""
+            Need help? -> https://docs-legacy.neptune.ai/setup/installation/"""
     raise PackageNotFoundError(msg)
 
 try:
